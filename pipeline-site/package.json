@@ -1,10 +1,12 @@
 {
-  "name": "pipeline-site",
+  "name": "coa-study-platform",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "description": "Interactive React study interface for the COA study material repository",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "start": "vite",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
