@@ -303,6 +303,6 @@ Contact for availability and terms.
 
 - Found a vulnerability? Email us (not GitHub issues)
 - Want to discuss security? GitHub Discussions
-- Need help securing deployment? See DEPLOYMENT.md
+- Need help securing deployment? See `docs/project/deployment.md`
 
 **Stay secure, happy learning! 🔒**

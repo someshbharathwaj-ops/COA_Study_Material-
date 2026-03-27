@@ -1,300 +1,69 @@
 # Project Architecture
 
-## System Overview
+This repository is organized as a study-material workspace with three main surfaces: lesson content, standalone tools, and a React application that brings the material together in one interface.
 
-COA Study Material is a comprehensive interactive learning platform with both standalone tools and an integrated React-based application.
+## Top-Level Structure
 
-```
-┌─────────────────────────────────────────────────────────┐
-│         COA Study Material (coa repository)             │
-├─────────────────────────────────────────────────────────┤
-│                                                           │
-│  ┌─────────────────┐  ┌──────────────────────────┐     │
-│  │  HTML Lessons   │  │  Standalone Tools (JSX)  │     │
-│  │                 │  │                          │     │
-│  │ - coa.html      │  │ - coa4.jsx (Simulator)   │     │
-│  │ - coa2.html     │  │ - cao5.jsx (Formulas)    │     │
-│  │ - coa3.html     │  │                          │     │
-│  └─────────────────┘  └──────────────────────────┘     │
-│                                                           │
-│  ┌────────────────────────────────────────────────┐     │
-│  │    React Application (pipeline-site)            │     │
-│  ├────────────────────────────────────────────────┤     │
-│  │                                                  │     │
-│  │  ┌──────────────────────────────────────────┐  │     │
-│  │  │         App.jsx (Main Container)        │  │     │
-│  │  │  ┌────────────────────────────────────┐ │  │     │
-│  │  │  │      10 Course Sections            │ │  │     │
-│  │  │  │  + Cao5 Component (Formulas)      │ │  │     │
-│  │  │  │  + Navigation Sidebar             │ │  │     │
-│  │  │  │  + Styling & Theme               │ │  │     │
-│  │  │  └────────────────────────────────────┘ │  │     │
-│  │  │                                          │  │     │
-│  │  └──────────────────────────────────────────┘  │     │
-│  │                                                  │     │
-│  └────────────────────────────────────────────────┘     │
-│                                                           │
-└─────────────────────────────────────────────────────────┘
-```
-
-## File Structure
-
-```
+```text
 coa/
-├── .git/                          # Git repository
-├── .gitignore                     # Git ignore rules
-├── LICENSE                        # MIT License
-├── README.md                      # Project overview
-├── CONTRIBUTING.md                # Contribution guidelines
-├── STUDY_GUIDE.md                 # Learning path
-├── GLOSSARY.md                    # Terminology
-├── CHANGELOG.md                   # Release history
-├── ARCHITECTURE.md                # This file
-│
-├── Standalone Components:
-├── coa.html                       # Lesson 1: Basics
-├── coa2.html                      # Lesson 2: Deep dive
-├── coa3.html                      # Lesson 3: Challenges
-├── coa4.jsx                       # Pipeline simulator
-├── cao5.jsx                       # Formula tool
-│
-└── pipeline-site/                 # React Application
-    ├── package.json               # Dependencies
-    ├── vite.config.js            # Vite configuration
-    ├── index.html                # Entry HTML
-    │
+├── README.md
+├── CONTRIBUTING.md
+├── CHANGELOG.md
+├── LICENSE
+├── docs/
+│   ├── guides/
+│   ├── project/
+│   └── reference/
+├── lessons/
+│   ├── 01-pipeline-fundamentals.html
+│   ├── 02-pipeline-stages-and-control.html
+│   └── 03-hazards-forwarding-and-branching.html
+├── tools/
+│   ├── formula-brain.jsx
+│   └── pipeline-simulator.jsx
+└── pipeline-site/
+    ├── index.html
+    ├── package.json
     ├── src/
-    │   ├── App.jsx               # Main app container
-    │   ├── Cao5.jsx              # Formulas component (adapted)
-    │   └── main.jsx              # React entry point
-    │
-    ├── public/                   # Static assets
-    └── dist/                     # Build output (generated)
+    │   ├── App.jsx
+    │   └── Cao5.jsx
+    └── vite.config.js
 ```
 
-## Technology Stack
+## Learning Content Layers
 
-### Frontend
-- **React 18+**: Component-based UI
-- **Vite**: Modern build tool, fast HMR
-- **JavaScript ES6+**: Modern syntax
-- **CSS-in-JS**: Inline styles with constants
+### Lessons
 
-### Development
-- **Node.js**: JavaScript runtime
-- **npm**: Package manager
-- **Git**: Version control
+The `lessons/` directory contains standalone HTML study pages that explain concepts in sequence:
 
-### No External Dependencies
-- Pure React (no additional UI libraries)
-- No CSS frameworks (custom dark theme)
-- No state management library (React hooks only)
-- No backend required
+1. fundamentals of pipelining
+2. stage responsibilities and control flow
+3. hazards, forwarding, and branch handling
 
-## Component Architecture
+These files are best suited for direct reading and revision.
 
-### App.jsx (Main Container)
-```
-App
-├── Navigation Sidebar
-│   ├── Logo
-│   ├── NavItems (11 sections)
-│   └── Page info
-│
-└── Main Content
-    ├── IntroSection
-    ├── PipelineSection
-    ├── StagesSection
-    ├── DatapathSection
-    ├── HazardsSection
-    ├── ForwardingSection
-    ├── ControlSection
-    ├── SimulatorSection
-    ├── PlaygroundSection
-    ├── QuizSection
-    └── FormulasSection (Cao5 component)
-```
+### Standalone Tools
 
-### Cao5.jsx (Formula Tool)
-```
-Cao5
-├── Header (sticky)
-│   ├── Title & stats
-│   └── Mode tabs (5 modes)
-│
-├── Content Area
-│   ├── Mode-Specific Component
-│   │   ├── FormulaExplorer
-│   │   ├── FlashcardMode
-│   │   ├── QuizMode
-│   │   ├── MemoryTrainer
-│   │   └── CheatSheet
-│   │
-│   └── Shared Components
-│       ├── Pill (difficulty badge)
-│       └── FormulaCard (expandable)
-│
-└── Footer
-```
+The `tools/` directory contains portable study utilities:
 
-## Data Structures
+- `pipeline-simulator.jsx` for visual pipeline tracing and hazard reasoning
+- `formula-brain.jsx` for formula review, recall, and practice
 
-### Formula Object
-```javascript
-{
-  id: "unique-id",                    // Unique identifier
-  title: "Formula Name",              // Display name
-  level: "easy|medium|critical",      // Difficulty
-  formula: "Mathematical formula",    // Display text
-  meaning: "What it means",          // Explanation
-  when: "When to use",               // Context
-  example: "Example usage",          // Worked example
-  mistake: "Common mistake"          // Error to avoid
-}
-```
+These files can be maintained independently of the React app.
 
-### Topic Object
-```javascript
-{
-  id: "topic-id",                    // Topic identifier
-  label: "Topic Label",              // Display name
-  icon: "📚",                        // Emoji icon
-  color: "#color",                   // Brand color
-  formulas: [Formula, ...]           // Array of formulas
-}
-```
+### React App
 
-### Quiz Question Object
-```javascript
-{
-  q: "Question text",                // Problem statement
-  formula: "Required formula",       // Hint
-  answer: "Worked solution",         // Full solution
-  topic: "topic-id"                  // Related topic
-}
-```
+The `pipeline-site/` directory packages the material into a single learner-facing interface built with React and Vite. It serves as the interactive front end for browsing topics, revising formulas, and exploring the study content in one place.
 
-## State Management
+## Documentation Layers
 
-### React Hooks Usage
-- **useState**: Mode selection, UI state, quiz scores
-- **useEffect**: IntersectionObserver setup, component lifecycle
-- **useRef**: DOM references, timer management
-- **useCallback**: Memoized event handlers
+- `docs/guides/`: student-facing usage and study guidance
+- `docs/reference/`: quick lookup material such as glossary and FAQ
+- `docs/project/`: repository maintenance and engineering notes
 
-### No Global State
-- Each section manages its own state
-- Cao5 component is self-contained
-- IntersectionObserver for navigation sync
+## Maintenance Principles
 
-## Styling Strategy
-
-### CSS Architecture
-- **CSS-in-JS**: Inline style objects
-- **Component scoping**: Unique classes where needed
-- **Design tokens**: @import Google Fonts in HTML
-- **Color variables**: - prefix CSS variables
-- **Dark theme**: #010409 background with gradients
-
-### Key Colors
-- Primary: #00f5d4 (cyan)
-- Secondary: #a78bfa (purple)
-- Accent: #ff6b6b (red)
-- Background: #010409
-- Surface: #0d1117
-- Border: #21262d
-- Text: #e6edf3
-- Text secondary: #8b949e
-
-## Performance Optimizations
-
-### Rendering
-- Component-level optimization with React.memo (implicit)
-- Memoized callbacks to prevent re-renders
-- IntersectionObserver for visibility tracking
-
-### Bundle Size
-- No external dependencies (minimal bundle)
-- Tree-shaking enabled in Vite
-- Code splitting for route optimization
-
-### Runtime
-- Efficient event listeners
-- Proper cleanup in useEffect
-- Debounced search in formula explorer
-
-## Deployment Architecture
-
-### Local Development
-```
-npm install          # Install dependencies
-npm run dev          # Vite dev server (localhost:5173)
-```
-
-### Production Build
-```
-npm run build        # Creates dist/ directory
-npm run preview      # Preview production build
-```
-
-### Hosting Options
-- **Vercel**: Zero-config deployment
-- **Netlify**: Automatic builds from Git
-- **GitHub Pages**: Static hosting
-- **Traditional servers**: Copy dist/ contents
-
-## Security Considerations
-
-### Data Privacy
-- No user data collection
-- No backend authentication
-- All computation client-side
-- localStorage only (optional progress)
-
-### Code Safety
-- No eval() or dynamic execution
-- Input sanitization for quiz answers
-- No external API calls
-- MIT licensed (inspect freely)
-
-## Browser Compatibility
-
-| Browser | Support | Min Version |
-|---------|---------|-------------|
-| Chrome | ✅ Full | 90+ |
-| Firefox | ✅ Full | 88+ |
-| Safari | ✅ Full | 14+ |
-| Edge | ✅ Full | 90+ |
-| Safari Mobile | ✅ Full | 13+ |
-| Chrome Mobile | ✅ Full | 90+ |
-
-## Accessibility Features
-
-- Semantic HTML structure
-- ARIA labels on interactive elements
-- High contrast dark theme
-- Keyboard navigation support
-- Focus indicators on interactive elements
-- Readable font sizes (minimum 13px)
-
-## Future Architecture Plans
-
-### v2.0 Enhancements
-- Component library extraction
-- Storybook integration
-- TypeScript migration
-- Redux/Context for state
-- Backend API integration
-- User authentication
-- Database for progress tracking
-- Collaborative features
-
-### Scalability
-- Current architecture supports 100+ formulas
-- Component system ready for expansion
-- Modular study modes
-- Easy to add new lessons
-
----
-
-**Architecture follows:** React best practices, accessibility standards, and performance optimization guidelines.
+- Keep the root focused on repository entry points only.
+- Place learning assets by purpose rather than file type alone.
+- Update links and documentation whenever files are moved or renamed.
+- Treat the React app as one surface of the repo, not the entire repo.
