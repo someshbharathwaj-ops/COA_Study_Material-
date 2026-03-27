@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 // ─── DATA ────────────────────────────────────────────────────────────────────
 const TOPICS = [
@@ -822,22 +822,6 @@ function MemoryTrainer() {
     setTimeLeft(20);
   };
 
-  useEffect(() => {
-    if (phase !== "recall" && phase !== "study") return;
-    timerRef.current = setInterval(() => {
-      setTimeLeft(t => {
-        if (t <= 1) {
-          clearInterval(timerRef.current);
-          if (phase === "study") startRecall();
-          else handleSubmit(true);
-          return 0;
-        }
-        return t - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timerRef.current);
-  }, [phase, qIdx]);
-
   const handleSubmit = (timedOut = false) => {
     clearInterval(timerRef.current);
     const correct = input.trim().length > 10;
@@ -853,6 +837,22 @@ function MemoryTrainer() {
       setInput("");
     }
   };
+
+  useEffect(() => {
+    if (phase !== "recall" && phase !== "study") return;
+    timerRef.current = setInterval(() => {
+      setTimeLeft(t => {
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          if (phase === "study") startRecall();
+          else handleSubmit(true);
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timerRef.current);
+  }, [phase, qIdx]);
 
   const urgentColor = timeLeft <= 5 ? "#ff6b6b" : timeLeft <= 10 ? "#ffd166" : "#00f5d4";
 
