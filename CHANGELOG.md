@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Improved
+- Reorganized the repository into `docs/`, `lessons/`, and `tools/`
+- Rewrote the main README and added documentation indexes
+- Added contributor templates and clearer contribution guidance
+- Restored the React app bootstrap, lint config, and package lockfile
+- Verified the frontend with working `npm run lint` and `npm run build`
+
 ## [1.0.0] - 2024-03-27
 
 ### Added
