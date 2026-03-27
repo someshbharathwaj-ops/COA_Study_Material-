@@ -12,19 +12,19 @@ Total: **25-30 hours for solid understanding**, 40+ hours for competitive master
 
 ### Q: What's the best way to use this platform?
 **A:** Follow the recommended learning path:
-1. Read lesson (coa.html) - 1 hour
+1. Read Lesson 1 in `lessons/01-pipeline-fundamentals.html` - 1 hour
 2. Explore formulas - 30 minutes
 3. Use simulator - 1 hour
 4. Flashcards daily - 30 minutes
 5. Take quiz - 1 hour
 6. Practice problems - 2 hours
 
-See [STUDY_GUIDE.md](STUDY_GUIDE.md) for detailed plan.
+See [`../guides/study-guide.md`](../guides/study-guide.md) for a detailed plan.
 
 ### Q: I don't understand a formula. Help?
 **A:** Try these in order:
 1. **Formula Explorer**: Expand card for meaning & example
-2. **GLOSSARY.md**: Search for related terms
+2. **Glossary**: Search for related terms in [`glossary.md`](glossary.md)
 3. **Quiz**: See worked solutions
 4. **Lessons**: Read context in HTML lessons
 5. **Memory Trainer**: Active recall builds understanding
@@ -75,7 +75,7 @@ Subsequent loads are instant (browser caching). If truly slow:
 1. Check internet speed (test on speedtest.net)
 2. Try different browser
 3. Clear cache: Ctrl+Shift+Delete
-4. See [DEPLOYMENT.md](DEPLOYMENT.md) for optimization
+4. See [`../project/deployment.md`](../project/deployment.md) for optimization
 
 ### Q: Can I use this offline?
 **A:** Currently no, but it's planned for v1.1. For now:
@@ -124,7 +124,7 @@ Avoid Internet Explorer (not supported).
 ### Q: Can I add my own formulas/problems?
 **A:** Yes! See [CONTRIBUTING.md](CONTRIBUTING.md). Process:
 1. Fork repo on GitHub
-2. Add to cao5.jsx or coa4.jsx
+2. Add to `tools/formula-brain.jsx` or `tools/pipeline-simulator.jsx`
 3. Submit pull request
 4. Get credited in changelog
 

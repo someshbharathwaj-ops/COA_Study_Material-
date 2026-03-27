@@ -4,21 +4,21 @@ This guide helps you navigate the COA Study Material effectively.
 
 ## Learning Path
 
-### Phase 1: Fundamentals (coa.html)
+### Phase 1: Fundamentals (`lessons/01-pipeline-fundamentals.html`)
 - Understanding pipeline basics
 - 5-stage pipeline overview
 - Clock cycles and throughput
 - **Time Estimate**: 2-3 hours
 - **Key Concepts**: IF, ID, EX, MEM, WB stages
 
-### Phase 2: Deep Dive (coa2.html)
+### Phase 2: Deep Dive (`lessons/02-pipeline-stages-and-control.html`)
 - Detailed stage analysis
 - Each stage's responsibilities
 - Control signal flow
 - **Time Estimate**: 3-4 hours
 - **Key Concepts**: Opcode decoding, register forwarding
 
-### Phase 3: Challenges (coa3.html)
+### Phase 3: Challenges (`lessons/03-hazards-forwarding-and-branching.html`)
 - Data hazards (RAW, WAW, WAR)
 - Control hazards (branch prediction)
 - Structural hazards (resource conflicts)
@@ -27,7 +27,7 @@ This guide helps you navigate the COA Study Material effectively.
 
 ## Interactive Tools
 
-### Pipeline Simulator (coa4.jsx)
+### Pipeline Simulator (`tools/pipeline-simulator.jsx`)
 **Best for**: Hands-on visualization and practice
 
 Features:
@@ -42,7 +42,7 @@ Features:
 3. Calculate total cycles with/without forwarding
 4. Design forwarding paths for given instructions
 
-### Formula Brain (cao5.jsx)
+### Formula Brain (`tools/formula-brain.jsx`)
 **Best for**: Problem solving and formula memorization
 
 Modes:
@@ -55,13 +55,13 @@ Modes:
 ## Recommended Study Schedule
 
 ### Week 1: Foundations
-- **Monday**: Read coa.html + Formula Explorer
+- **Monday**: Read Lesson 1 + Formula Explorer
 - **Tuesday**: Pipeline Simulator tutorial
-- **Wednesday-Thursday**: coa2.html + practice problems
+- **Wednesday-Thursday**: Read Lesson 2 + practice problems
 - **Friday**: Quiz Mode in Formula Brain (score tracking)
 
 ### Week 2: Challenges
-- **Monday-Tuesday**: coa3.html study
+- **Monday-Tuesday**: Study Lesson 3
 - **Wednesday**: Simulator - custom programs
 - **Thursday**: Flashcard mode daily (30 min)
 - **Friday**: Memory Trainer intensive

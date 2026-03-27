@@ -42,22 +42,22 @@ npm run dev
 
 ## Using Standalone Tools
 
-### Pipeline Simulator (coa4.jsx)
-1. Open `coa4.jsx` in a JavaScript runtime
+### Pipeline Simulator (`tools/pipeline-simulator.jsx`)
+1. Open `tools/pipeline-simulator.jsx` in a JavaScript runtime
 2. Or use in HTML:
 ```html
-<script src="coa4.jsx"></script>
+<script src="../tools/pipeline-simulator.jsx"></script>
 ```
 
-### Formula Tool (cao5.jsx)
+### Formula Tool (`tools/formula-brain.jsx`)
 - Integrated in React app automatically
 - Also usable as standalone component
 
 ### HTML Lessons
 Simply open in browser:
-- `coa.html` - Click to view
-- `coa2.html` - Click to view
-- `coa3.html` - Click to view
+- `lessons/01-pipeline-fundamentals.html` - Start here
+- `lessons/02-pipeline-stages-and-control.html` - Continue with stage behavior
+- `lessons/03-hazards-forwarding-and-branching.html` - Finish with hazards and recovery
 
 ## First Steps
 
@@ -126,10 +126,10 @@ Works best in:
 
 ## Next Steps
 
-1. **Complete STUDY_GUIDE.md** for structured learning
-2. **Reference GLOSSARY.md** for terminology
+1. **Complete `docs/guides/study-guide.md`** for structured learning
+2. **Reference `docs/reference/glossary.md`** for terminology
 3. **Check out CONTRIBUTING.md** to contribute
-4. **Read ARCHITECTURE.md** for technical details
+4. **Read `docs/project/architecture.md`** for technical details
 
 ## Tips for Success
 

@@ -7,11 +7,11 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Initial release of COA Study Material platform
 - Three HTML-based lessons:
-  - Lesson 1: Basic Pipeline Concepts (coa.html)
-  - Lesson 2: Pipeline Stages Deep Dive (coa2.html)
-  - Lesson 3: Hazards and Forwarding Solutions (coa3.html)
+  - Lesson 1: Basic Pipeline Concepts (`lessons/01-pipeline-fundamentals.html`)
+  - Lesson 2: Pipeline Stages Deep Dive (`lessons/02-pipeline-stages-and-control.html`)
+  - Lesson 3: Hazards and Forwarding Solutions (`lessons/03-hazards-forwarding-and-branching.html`)
 
-- Interactive Pipeline Simulator (coa4.jsx):
+- Interactive Pipeline Simulator (`tools/pipeline-simulator.jsx`):
   - 5-stage pipeline visualization
   - Real-time instruction tracing
   - Hazard detection (RAW, Control, Structural)
@@ -19,7 +19,7 @@ All notable changes to this project will be documented in this file.
   - Performance metrics calculation
   - Custom instruction simulator
 
-- COA Formula Brain (cao5.jsx):
+- COA Formula Brain (`tools/formula-brain.jsx`):
   - 50+ formulas across 6 topics
   - 5 interactive study modes:
     * Formula Explorer with topic filtering

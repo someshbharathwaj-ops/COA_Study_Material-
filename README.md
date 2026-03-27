@@ -1,40 +1,24 @@
-# COA Study Material - Computer Organization & Architecture Learning Platform
+# COA Study Material Repository
 
-A comprehensive interactive learning platform for Computer Organization and Architecture (COA) with hands-on pipeline simulation, formula tools, and problem solving.
+Professional study material for Computer Organization and Architecture, centered on pipelining, hazards, datapaths, performance formulas, and hands-on practice.
 
-## Features
+## What This Repository Includes
 
-- **Pipeline Simulator**: Visualize 5-stage pipeline execution with hazard detection
-- **COA Formulas**: 50+ essential formulas with interactive learning modes
-- **Study Modes**: Formula Explorer, Flashcards, Problem Quiz, Memory Trainer, Cheatsheet
-- **Interactive Datapath**: Visual representation of CPU datapath components
-- **Hazard Detection**: RAW, Control, and Structural hazard identification
-- **Forwarding Visualization**: Learn how data forwarding eliminates hazards
+- `lessons/`: standalone lesson pages for the core pipeline learning path
+- `tools/`: standalone interactive JSX tools for simulation and formula practice
+- `pipeline-site/`: the React/Vite study interface
+- `docs/`: guides, project notes, reference material, and maintenance docs
 
-## Project Structure
+## Recommended Learning Flow
 
-```
-coa/
-├── coa.html              # Lesson 1: Basic Pipeline Concepts
-├── coa2.html             # Lesson 2: Advanced Stages
-├── coa3.html             # Lesson 3: Hazards & Solutions
-├── coa4.jsx              # Interactive Pipeline Simulator
-├── cao5.jsx              # COA Formula Learning Tool
-└── pipeline-site/        # React-based Study Platform
-    ├── src/
-    │   ├── App.jsx       # Main application container
-    │   ├── Cao5.jsx      # Formula tool component
-    │   └── package.json
-    └── vite.config.js
-```
+1. Start with [`lessons/01-pipeline-fundamentals.html`](lessons/01-pipeline-fundamentals.html)
+2. Continue to [`lessons/02-pipeline-stages-and-control.html`](lessons/02-pipeline-stages-and-control.html)
+3. Finish the lesson track with [`lessons/03-hazards-forwarding-and-branching.html`](lessons/03-hazards-forwarding-and-branching.html)
+4. Practice with [`tools/pipeline-simulator.jsx`](tools/pipeline-simulator.jsx)
+5. Reinforce formulas with [`tools/formula-brain.jsx`](tools/formula-brain.jsx)
+6. Use [`docs/guides/study-guide.md`](docs/guides/study-guide.md) for a paced revision plan
 
-## Getting Started
-
-### Prerequisites
-- Node.js 16+
-- npm or yarn
-
-### Installation
+## Run The React App
 
 ```bash
 cd pipeline-site
@@ -42,51 +26,31 @@ npm install
 npm run dev
 ```
 
-Visit `http://localhost:5173` to access the learning platform.
+Open the local Vite URL shown in the terminal to explore the interactive study interface.
 
-## Study Materials Included
+## Documentation Map
 
-### Lessons
-1. **coa.html** - Pipeline fundamentals
-2. **coa2.html** - Pipeline stages deep dive
-3. **coa3.html** - Hazards and forwarding
+- [`docs/README.md`](docs/README.md): docs index
+- [`docs/guides/quick-start.md`](docs/guides/quick-start.md): fast setup and first-study path
+- [`docs/guides/study-guide.md`](docs/guides/study-guide.md): multi-week study plan
+- [`docs/reference/glossary.md`](docs/reference/glossary.md): COA terms and definitions
+- [`docs/reference/faq.md`](docs/reference/faq.md): common learner questions
+- [`docs/project/architecture.md`](docs/project/architecture.md): repository layout and technical overview
+- [`docs/project/roadmap.md`](docs/project/roadmap.md): planned improvements
+- [`docs/project/deployment.md`](docs/project/deployment.md): app deployment notes
+- [`docs/project/testing.md`](docs/project/testing.md): verification checklist
+- [`docs/project/security.md`](docs/project/security.md): security guidance
 
-### Interactive Tools
-- **Pipeline Simulator** (coa4.jsx)
-  - 5-stage pipeline execution
-  - Instruction tracing
-  - Hazard visualization
-  - Performance metrics
+## Repository Standards
 
-- **Formula Brain** (cao5.jsx)
-  - 50+ formulas organized by topic
-  - 5 study modes
-  - 6 practice problems
-  - Critical/Medium/Easy difficulty levels
+- Root-level files are kept minimal and intentional
+- Learning content is grouped by purpose instead of scattered across the root
+- Documentation uses lowercase kebab-case names for cleaner long-term maintenance
 
-## Topics Covered
+## Contributing
 
-- Pipeline Architecture
-- Data Hazards (RAW, WAW, WAR)
-- Control Hazards
-- Structural Hazards
-- Forwarding/Bypassing
-- Cache Hierarchies
-- Memory Management
-- AMAT Calculations
-- CPI Analysis
-
-## Technologies
-
-- React 18+
-- Vite (build tool)
-- JavaScript/JSX
-- Modern CSS-in-JS
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contribution guidelines and content conventions.
 
 ## License
 
-Open source educational material
-
-## Author
-
-Somesh Bharathwaj
+This project is released under the MIT License. See [`LICENSE`](LICENSE).
