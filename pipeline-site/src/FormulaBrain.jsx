@@ -1009,7 +1009,7 @@ const MODES = [
   { id: "cheatsheet", label: "Quick Cheatsheet", icon: "📋" }
 ];
 
-export default function Cao5() {
+export default function FormulaBrain() {
   const [mode, setMode] = useState("explorer");
 
   const totalFormulas = TOPICS.reduce((s, t) => s + t.formulas.length, 0);

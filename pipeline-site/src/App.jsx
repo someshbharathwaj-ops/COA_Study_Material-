@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import Cao5 from "./Cao5";
+import FormulaBrain from "./FormulaBrain";
 
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const STAGES = ["IF", "ID", "EX", "MEM", "WB"];
@@ -1958,7 +1958,7 @@ export default function App() {
           <PlaygroundSection />
           <QuizSection />
           <section id="formulas" className="section" style={{ background: "#060a14" }}>
-            <Cao5 />
+            <FormulaBrain />
           </section>
         </main>
       </div>
