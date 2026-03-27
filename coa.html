@@ -1,0 +1,1623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>COA Quest — Computer Architecture Learning Game</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Exo+2:wght@300;400;600;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg-0: #03040a;
+  --bg-1: #070b14;
+  --bg-2: #0c1220;
+  --bg-3: #111827;
+  --bg-card: #0f1928;
+  --border: rgba(56,189,248,0.12);
+  --border-glow: rgba(56,189,248,0.35);
+  --cyan: #38bdf8;
+  --cyan-dim: rgba(56,189,248,0.15);
+  --cyan-glow: rgba(56,189,248,0.4);
+  --gold: #fbbf24;
+  --gold-dim: rgba(251,191,36,0.15);
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,0.15);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.15);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.15);
+  --orange: #fb923c;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-dim: #475569;
+  --font-display: 'Exo 2', sans-serif;
+  --font-ui: 'Rajdhani', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg-0);
+  color:var(--text-primary);
+  font-family:var(--font-ui);
+  min-height:100vh;
+  overflow-x:hidden;
+}
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background:
+    radial-gradient(ellipse 60% 40% at 20% 0%, rgba(56,189,248,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 30% at 80% 100%, rgba(167,139,250,0.05) 0%, transparent 60%);
+  pointer-events:none;z-index:0;
+}
+#root{position:relative;z-index:1}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg-1)}
+::-webkit-scrollbar-thumb{background:var(--border-glow);border-radius:3px}
+
+/* Animations */
+@keyframes pulse-glow{0%,100%{box-shadow:0 0 8px var(--cyan-glow)}50%{box-shadow:0 0 20px var(--cyan-glow),0 0 40px rgba(56,189,248,0.2)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes scan-line{0%{transform:translateY(-100%)}100%{transform:translateY(100vh)}}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:0.8}96%{opacity:1}97%{opacity:0.9}}
+@keyframes spin-slow{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+@keyframes slide-in-right{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slide-in-up{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pop-in{0%{transform:scale(0.7);opacity:0}80%{transform:scale(1.05)}100%{transform:scale(1);opacity:1}}
+@keyframes xp-burst{0%{transform:scale(1);opacity:1}100%{transform:scale(2.5) translateY(-30px);opacity:0}}
+@keyframes progress-fill{from{width:0}to{width:var(--target-width)}}
+@keyframes grid-move{0%{background-position:0 0}100%{background-position:40px 40px}}
+@keyframes neon-border{0%,100%{border-color:rgba(56,189,248,0.3)}50%{border-color:rgba(56,189,248,0.7)}}
+@keyframes badge-reveal{0%{transform:scale(0) rotate(-180deg);opacity:0}70%{transform:scale(1.2) rotate(10deg)}100%{transform:scale(1) rotate(0deg);opacity:1}}
+@keyframes counter-tick{0%{transform:translateY(-100%);opacity:0}50%{transform:translateY(0);opacity:1}100%{transform:translateY(100%);opacity:0}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+
+.animate-slide-up{animation:slide-in-up 0.4s ease forwards}
+.animate-slide-right{animation:slide-in-right 0.4s ease forwards}
+.animate-pop{animation:pop-in 0.4s cubic-bezier(0.34,1.56,0.64,1) forwards}
+.animate-float{animation:float 3s ease-in-out infinite}
+.animate-pulse-glow{animation:pulse-glow 2s ease-in-out infinite}
+.animate-shake{animation:shake 0.4s ease}
+
+/* Grid background */
+.grid-bg{
+  background-image:
+    linear-gradient(rgba(56,189,248,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.04) 1px, transparent 1px);
+  background-size:40px 40px;
+  animation:grid-move 8s linear infinite;
+}
+
+/* Cards */
+.card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:12px;
+  transition:all 0.25s ease;
+}
+.card:hover{border-color:var(--border-glow);box-shadow:0 0 20px rgba(56,189,248,0.08)}
+.card-glow{border-color:var(--border-glow);box-shadow:0 0 30px rgba(56,189,248,0.1),inset 0 0 30px rgba(56,189,248,0.02)}
+
+/* Buttons */
+.btn{
+  font-family:var(--font-ui);
+  font-weight:700;
+  font-size:14px;
+  letter-spacing:1.5px;
+  text-transform:uppercase;
+  padding:10px 24px;
+  border-radius:8px;
+  border:none;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  position:relative;overflow:hidden;
+}
+.btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,0.1),transparent);
+  opacity:0;transition:opacity 0.2s;
+}
+.btn:hover::before{opacity:1}
+.btn:active{transform:scale(0.97)}
+.btn-cyan{background:linear-gradient(135deg,#0ea5e9,#38bdf8);color:#000;box-shadow:0 0 20px rgba(56,189,248,0.3)}
+.btn-cyan:hover{box-shadow:0 0 30px rgba(56,189,248,0.5)}
+.btn-gold{background:linear-gradient(135deg,#d97706,#fbbf24);color:#000;box-shadow:0 0 20px rgba(251,191,36,0.3)}
+.btn-ghost{background:transparent;border:1px solid var(--border-glow);color:var(--cyan)}
+.btn-ghost:hover{background:var(--cyan-dim);box-shadow:0 0 15px rgba(56,189,248,0.2)}
+.btn-danger{background:linear-gradient(135deg,#dc2626,#f87171);color:#fff}
+.btn-green{background:linear-gradient(135deg,#059669,#34d399);color:#000}
+.btn-sm{padding:6px 14px;font-size:12px}
+.btn-lg{padding:14px 32px;font-size:16px}
+.btn:disabled{opacity:0.4;cursor:not-allowed}
+
+/* Tags & Badges */
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 10px;border-radius:20px;
+  font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+}
+.badge-cyan{background:var(--cyan-dim);color:var(--cyan);border:1px solid rgba(56,189,248,0.3)}
+.badge-gold{background:var(--gold-dim);color:var(--gold);border:1px solid rgba(251,191,36,0.3)}
+.badge-green{background:var(--green-dim);color:var(--green);border:1px solid rgba(52,211,153,0.3)}
+.badge-red{background:var(--red-dim);color:var(--red);border:1px solid rgba(248,113,113,0.3)}
+.badge-purple{background:var(--purple-dim);color:var(--purple);border:1px solid rgba(167,139,250,0.3)}
+
+/* Progress */
+.progress-bar{
+  height:8px;border-radius:4px;
+  background:var(--bg-3);overflow:hidden;
+  position:relative;
+}
+.progress-fill{
+  height:100%;border-radius:4px;
+  background:linear-gradient(90deg,var(--cyan),#7dd3fc);
+  transition:width 0.6s cubic-bezier(0.34,1.56,0.64,1);
+  position:relative;overflow:hidden;
+}
+.progress-fill::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent);
+  animation:progress-shine 1.5s linear infinite;
+}
+@keyframes progress-shine{from{transform:translateX(-100%)}to{transform:translateX(200%)}}
+.progress-bar.gold .progress-fill{background:linear-gradient(90deg,var(--gold),#fde68a)}
+.progress-bar.green .progress-fill{background:linear-gradient(90deg,var(--green),#6ee7b7)}
+.progress-bar.purple .progress-fill{background:linear-gradient(90deg,var(--purple),#c4b5fd)}
+
+/* XP notification */
+.xp-pop{
+  position:fixed;top:100px;right:24px;z-index:9999;
+  background:linear-gradient(135deg,#0ea5e9,#38bdf8);
+  color:#000;font-weight:900;font-size:18px;
+  padding:8px 20px;border-radius:40px;
+  animation:xp-burst 1.2s ease forwards;
+  pointer-events:none;
+}
+
+/* Tooltip */
+.tooltip{position:relative}
+.tooltip-text{
+  display:none;position:absolute;bottom:120%;left:50%;transform:translateX(-50%);
+  background:var(--bg-3);border:1px solid var(--border-glow);
+  color:var(--text-primary);font-size:12px;padding:6px 10px;
+  border-radius:6px;white-space:nowrap;z-index:100;
+}
+.tooltip:hover .tooltip-text{display:block}
+
+/* Formula box */
+.formula-box{
+  background:var(--bg-2);
+  border:1px solid rgba(56,189,248,0.2);
+  border-left:3px solid var(--cyan);
+  border-radius:8px;padding:12px 16px;
+  font-family:var(--font-mono);font-size:14px;
+  color:var(--cyan);line-height:1.7;
+  margin:8px 0;
+}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.divider-glow{height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent);margin:16px 0}
+
+/* Nav */
+.nav{
+  position:sticky;top:0;z-index:1000;
+  background:rgba(7,11,20,0.9);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  height:60px;
+}
+.nav-logo{
+  font-family:var(--font-display);
+  font-weight:900;font-size:22px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:2px;
+}
+.nav-stats{display:flex;gap:20px;align-items:center}
+.stat-chip{
+  display:flex;align-items:center;gap:6px;
+  background:var(--bg-2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;
+  font-size:13px;font-weight:700;
+}
+
+/* Layout */
+.main{padding:24px;max-width:1200px;margin:0 auto}
+
+/* Module cards */
+.module-card{
+  background:var(--bg-card);
+  border:1px solid var(--border);
+  border-radius:16px;padding:24px;
+  cursor:pointer;
+  transition:all 0.3s ease;
+  position:relative;overflow:hidden;
+}
+.module-card::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 80% 20%, var(--accent-dim,rgba(56,189,248,0.08)), transparent 60%);
+  opacity:0;transition:opacity 0.3s;
+}
+.module-card:hover::before{opacity:1}
+.module-card:hover{border-color:var(--accent,var(--cyan));transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,0.4)}
+.module-card.locked{opacity:0.5;cursor:not-allowed}
+.module-card.completed{border-color:var(--green);box-shadow:0 0 20px rgba(52,211,153,0.1)}
+
+/* Flashcard */
+.flashcard-container{
+  perspective:1000px;height:280px;cursor:pointer;
+}
+.flashcard-inner{
+  width:100%;height:100%;
+  transition:transform 0.6s cubic-bezier(0.4,0,0.2,1);
+  transform-style:preserve-3d;
+  position:relative;
+}
+.flashcard-inner.flipped{transform:rotateY(180deg)}
+.flashcard-face{
+  position:absolute;inset:0;
+  backface-visibility:hidden;
+  border-radius:16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px;text-align:center;
+}
+.flashcard-front{
+  background:linear-gradient(135deg,var(--bg-2),var(--bg-card));
+  border:1px solid var(--border-glow);
+}
+.flashcard-back{
+  background:linear-gradient(135deg,rgba(56,189,248,0.08),rgba(167,139,250,0.08));
+  border:1px solid rgba(167,139,250,0.4);
+  transform:rotateY(180deg);
+}
+
+/* Quiz option */
+.quiz-option{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:10px;padding:14px 18px;
+  cursor:pointer;
+  transition:all 0.2s ease;
+  display:flex;align-items:center;gap:12px;
+  font-size:15px;
+}
+.quiz-option:hover{border-color:var(--cyan);background:var(--cyan-dim)}
+.quiz-option.correct{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+.quiz-option.wrong{border-color:var(--red);background:var(--red-dim);color:var(--red);animation:shake 0.4s ease}
+.quiz-option.selected{border-color:var(--cyan);background:var(--cyan-dim)}
+.option-key{
+  width:28px;height:28px;
+  border-radius:6px;border:1px solid var(--border-glow);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:12px;color:var(--cyan);
+  flex-shrink:0;
+}
+
+/* Pipeline visualization */
+.pipeline-stage{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:8px;padding:10px 14px;
+  text-align:center;
+  font-size:12px;font-weight:700;letter-spacing:1px;
+  position:relative;
+  transition:all 0.3s ease;
+  min-width:80px;
+}
+.pipeline-stage.active{
+  border-color:var(--cyan);
+  background:var(--cyan-dim);
+  box-shadow:0 0 15px rgba(56,189,248,0.3);
+  color:var(--cyan);
+}
+.pipeline-stage.stall{
+  border-color:var(--red);background:var(--red-dim);color:var(--red);
+}
+.pipeline-arrow{
+  color:var(--text-dim);font-size:18px;
+  display:flex;align-items:center;
+}
+
+/* Achievement popup */
+.achievement-popup{
+  position:fixed;bottom:80px;right:24px;z-index:9998;
+  background:linear-gradient(135deg,#0f1928,#1a2540);
+  border:1px solid var(--gold);
+  border-radius:16px;padding:16px 20px;
+  display:flex;align-items:center;gap:14px;
+  box-shadow:0 0 30px rgba(251,191,36,0.2);
+  animation:slide-in-right 0.5s ease;
+  max-width:300px;
+}
+
+/* Timer */
+.timer{
+  font-family:var(--font-mono);font-size:24px;font-weight:700;
+  color:var(--cyan);letter-spacing:3px;
+  position:relative;
+}
+.timer.warning{color:var(--gold);animation:flicker 2s infinite}
+.timer.danger{color:var(--red);animation:pulse-glow 0.5s infinite}
+
+/* Section headers */
+.section-title{
+  font-family:var(--font-display);
+  font-weight:900;letter-spacing:3px;
+  text-transform:uppercase;
+  font-size:12px;color:var(--text-dim);
+  margin-bottom:16px;
+}
+.page-title{
+  font-family:var(--font-display);
+  font-weight:900;font-size:32px;
+  line-height:1.1;
+}
+.page-title span{
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+
+/* Tabs */
+.tab-bar{
+  display:flex;gap:2px;
+  background:var(--bg-2);border:1px solid var(--border);
+  border-radius:10px;padding:4px;
+  overflow-x:auto;
+}
+.tab{
+  padding:8px 18px;border-radius:7px;
+  font-weight:700;font-size:13px;letter-spacing:1px;
+  text-transform:uppercase;cursor:pointer;
+  transition:all 0.2s ease;
+  white-space:nowrap;
+  border:none;background:transparent;
+  color:var(--text-dim);
+}
+.tab.active{background:linear-gradient(135deg,rgba(56,189,248,0.2),rgba(167,139,250,0.1));color:var(--cyan);border:1px solid rgba(56,189,248,0.3)}
+.tab:hover:not(.active){background:var(--bg-3);color:var(--text-secondary)}
+
+/* Hexagon level indicator */
+.hex-level{
+  width:56px;height:56px;
+  clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:18px;
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  color:#000;
+  flex-shrink:0;
+}
+
+/* Streak flames */
+.flame{
+  font-size:20px;
+  filter:drop-shadow(0 0 6px #ff6b00);
+  animation:float 1s ease-in-out infinite;
+}
+
+/* Interactive slider */
+.slider-track{
+  -webkit-appearance:none;
+  width:100%;height:6px;border-radius:3px;
+  background:var(--bg-3);outline:none;cursor:pointer;
+}
+.slider-track::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:var(--cyan);cursor:pointer;
+  box-shadow:0 0 10px rgba(56,189,248,0.5);
+  border:2px solid rgba(56,189,248,0.3);
+}
+
+/* Memory hierarchy */
+.memory-tier{
+  border-radius:10px;cursor:pointer;
+  transition:all 0.3s ease;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 20px;
+  border:1px solid var(--border);
+  margin:4px 0;
+}
+.memory-tier:hover{transform:scale(1.01);border-color:var(--accent,var(--cyan))}
+
+/* Fill blank input */
+.fill-input{
+  background:var(--bg-2);
+  border:1px solid var(--border-glow);
+  border-radius:8px;
+  padding:10px 16px;
+  color:var(--text-primary);
+  font-family:var(--font-mono);
+  font-size:16px;
+  outline:none;
+  transition:all 0.2s;
+  width:100%;
+}
+.fill-input:focus{border-color:var(--cyan);box-shadow:0 0 15px rgba(56,189,248,0.2)}
+.fill-input.correct{border-color:var(--green);color:var(--green)}
+.fill-input.wrong{border-color:var(--red);color:var(--red)}
+
+/* Datapath node */
+.dp-node{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:8px;padding:8px 14px;
+  font-size:12px;font-weight:700;
+  cursor:pointer;
+  transition:all 0.3s;
+  text-align:center;
+}
+.dp-node.active{
+  border-color:var(--cyan);
+  background:var(--cyan-dim);
+  color:var(--cyan);
+  box-shadow:0 0 15px rgba(56,189,248,0.3);
+}
+
+/* Boss level */
+.boss-card{
+  background:linear-gradient(135deg,rgba(248,113,113,0.08),rgba(167,139,250,0.08));
+  border:1px solid rgba(248,113,113,0.4);
+  border-radius:16px;
+  padding:24px;
+  position:relative;overflow:hidden;
+}
+.boss-card::before{
+  content:'⚡';
+  position:absolute;right:-20px;top:-20px;
+  font-size:100px;opacity:0.05;
+}
+
+/* Responsive */
+@media(max-width:768px){
+  .main{padding:12px}
+  .nav{padding:0 12px}
+  .page-title{font-size:24px}
+  .nav-stats{gap:8px}
+  .stat-chip{padding:3px 8px;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const {useState, useEffect, useRef, useCallback} = React;
+
+/* ═══════════════════════════════════════════════
+   CONTENT DATABASE
+═══════════════════════════════════════════════ */
+const MODULES = [
+  {
+    id:'performance', title:'Performance', emoji:'⚡', color:'var(--cyan)', accent:'--cyan',
+    level:1, xpReward:300, unlocked:true,
+    description:'CPU performance metrics, CPI, MIPS, Amdahl\'s Law',
+    flashcards:[
+      {q:'What is CPU Execution Time?',a:'CPU Time = Instruction Count × CPI × Clock Cycle Time\n= IC × CPI / Clock Rate',example:'If IC=5×10⁹, CPI=2, Clock=2GHz → CPU Time = 5s'},
+      {q:'What is CPI?',a:'Cycles Per Instruction — average number of clock cycles needed to execute one instruction.',example:'CPI = Total Cycles / Total Instructions'},
+      {q:'What is MIPS?',a:'Millions of Instructions Per Second.\nMIPS = Clock Rate / (CPI × 10⁶)',example:'2GHz CPU with CPI=2 → MIPS = 1000'},
+      {q:'What is Amdahl\'s Law?',a:'Speedup = 1 / [(1 - F) + F/S]\nF = fraction improved, S = speedup of that fraction',example:'F=0.9, S=10 → Speedup = 1/(0.1+0.09) ≈ 5.26'},
+      {q:'What is Clock Cycle Time?',a:'Time for one clock tick.\nClock Cycle Time = 1 / Clock Rate',example:'2 GHz clock → Cycle time = 0.5 ns'},
+      {q:'What are the Iron Law components?',a:'Performance = IC × CPI × Clock Cycle Time\nThree independently improvable factors.',example:'Reduce any one → improve performance'},
+      {q:'What is FLOPS?',a:'Floating Point Operations Per Second — used for scientific workloads.',example:'1 TFLOPS = 10¹² float ops/sec'},
+      {q:'What is IPC?',a:'Instructions Per Cycle = 1/CPI\nHigher IPC = more efficient execution.',example:'CPI=0.5 → IPC=2 (superscalar)'},
+    ],
+    quizzes:[
+      {type:'mcq',q:'A CPU has IC=2×10⁹, CPI=4, and Clock Rate=2GHz. What is CPU time?',
+       options:['2s','4s','8s','1s'],correct:1,
+       explanation:'CPU Time = IC×CPI/Rate = 2×10⁹×4 / 2×10⁹ = 4 seconds'},
+      {type:'mcq',q:'Which formula represents Amdahl\'s Law?',
+       options:['S = F × (1-S)','S = 1/[(1-F) + F/S]','S = IC × CPI','S = Clock/CPI'],correct:1,
+       explanation:'Amdahl\'s Law: Speedup = 1/[(1-F) + F/S] where F is the improved fraction'},
+      {type:'tf',q:'Increasing clock rate always proportionally increases performance.',
+       correct:false,explanation:'CPI may increase at higher clock rates, and power consumption rises too. Net gain is limited.'},
+      {type:'tf',q:'MIPS is always a reliable performance metric across different architectures.',
+       correct:false,explanation:'MIPS ignores instruction complexity — different ISAs do different work per instruction.'},
+      {type:'fill',q:'CPU Time = IC × ___ × Clock Cycle Time',answer:'CPI',
+       explanation:'CPI (Cycles Per Instruction) is the middle term in the Iron Law of Performance.'},
+      {type:'fill',q:'Amdahl\'s Law shows that the maximum speedup is limited by the ___ portion of code.',
+       answer:'serial',explanation:'The non-parallelizable (serial) fraction creates the performance ceiling.'},
+      {type:'mcq',q:'If CPI = 2 and Clock = 1 GHz, what is MIPS?',
+       options:['500','1000','2000','250'],correct:0,
+       explanation:'MIPS = Clock Rate / (CPI × 10⁶) = 10⁹ / (2 × 10⁶) = 500 MIPS'},
+      {type:'mcq',q:'The "Iron Law" of computer performance involves:',
+       options:['IC, CPI, Clock Rate','Cache, RAM, Disk','MIPS, FLOPS, IPC','L1, L2, L3'],correct:0,
+       explanation:'Iron Law: Performance = IC × CPI × Clock Cycle Time — three parameters, each tunable.'},
+    ],
+    formulas:[
+      {name:'CPU Execution Time',f:'T_cpu = IC × CPI × T_clk',note:'Core performance equation'},
+      {name:'MIPS',f:'MIPS = f_clk / (CPI × 10⁶)',note:'f_clk in Hz'},
+      {name:'Amdahl\'s Law',f:'S = 1 / [(1-F) + F/S_e]',note:'F = enhanced fraction, S_e = enhancement speedup'},
+      {name:'Clock Cycle Time',f:'T_clk = 1 / f_clk',note:'Inverse of frequency'},
+      {name:'Speedup',f:'Speedup = T_old / T_new',note:'Ratio of execution times'},
+      {name:'CPI (weighted)',f:'CPI = Σ(CPI_i × F_i)',note:'F_i = frequency of instruction type i'},
+    ],
+    challenges:[
+      {q:'A benchmark has 10⁹ instructions. 30% are memory ops (CPI=4), 70% are ALU ops (CPI=1). Clock = 2GHz. Find total execution time.',
+       answer:'1.05',unit:'s',hint:'Compute weighted CPI first: 0.3×4 + 0.7×1 = 1.9. Then T = IC×CPI/f'},
+      {q:'Current CPU: 2GHz, CPI=4. New design: 2.5GHz, CPI=3.5. What is the speedup?',
+       answer:'1.14',unit:'×',hint:'T_old = IC×4/2G, T_new = IC×3.5/2.5G. Speedup = T_old/T_new'},
+    ]
+  },
+  {
+    id:'datapath', title:'Single Cycle Datapath', emoji:'🔧', color:'var(--purple)', accent:'--purple',
+    level:2, xpReward:350, unlocked:false,
+    description:'MIPS datapath, control signals, R/I/J type instructions',
+    flashcards:[
+      {q:'What is a Single Cycle Datapath?',a:'An implementation where every instruction executes in exactly one clock cycle. The cycle time is determined by the slowest instruction.',example:'Load word (lw) is typically the critical path'},
+      {q:'What are the 5 datapath components?',a:'1. Instruction Memory\n2. Register File\n3. ALU\n4. Data Memory\n5. PC (Program Counter)',example:'Each component is accessed once per cycle'},
+      {q:'What is the ALU Control?',a:'3-bit signal controlling ALU operation.\n000=AND, 001=OR, 010=ADD, 110=SUB, 111=SLT',example:'R-type: derived from funct field'},
+      {q:'What is RegDst?',a:'Control signal selecting write destination register.\n0=rt (bits 20-16)\n1=rd (bits 15-11)',example:'R-type uses rd → RegDst=1'},
+      {q:'What is MemtoReg?',a:'Selects data written to register file.\n0=ALU result, 1=Data Memory output',example:'lw uses MemtoReg=1'},
+      {q:'What is the R-type instruction format?',a:'[op:6][rs:5][rt:5][rd:5][shamt:5][funct:6]',example:'add $t0,$t1,$t2 uses funct=100000'},
+      {q:'What is the I-type instruction format?',a:'[op:6][rs:5][rt:5][imm:16]',example:'lw $t0, 4($t1) — offset stored in imm field'},
+      {q:'What does the sign-extend unit do?',a:'Extends 16-bit immediate to 32-bit by replicating the sign bit.',example:'0x8000 → 0xFFFF8000 (negative)'},
+    ],
+    quizzes:[
+      {type:'mcq',q:'Which instruction defines the critical path (longest) in single-cycle datapath?',
+       options:['add','sub','lw (load word)','beq'],correct:2,
+       explanation:'lw requires: IF→ID→EX→MEM→WB — all 5 stages, including memory access twice'},
+      {type:'mcq',q:'In R-type instructions, RegDst signal is:',
+       options:['0 (uses rt)','1 (uses rd)','X (don\'t care)','2 (uses rs)'],correct:1,
+       explanation:'R-type writes to rd (destination register), bits [15:11], so RegDst=1'},
+      {type:'tf',q:'In a single cycle datapath, all instructions take the same amount of time.',
+       correct:true,explanation:'Yes — by definition, single cycle means one clock cycle per instruction, though functional units vary in speed'},
+      {type:'tf',q:'The ALU performs addition for both \'add\' and \'lw\' instructions.',
+       correct:true,explanation:'For lw, ALU computes: base_address + offset. For add, it computes the arithmetic sum.'},
+      {type:'fill',q:'The ___-type format uses rs, rt, rd, shamt, and funct fields.',
+       answer:'R',explanation:'R-type (Register-type) contains all register fields plus the function code.'},
+      {type:'mcq',q:'Which control signal determines whether ALU input 2 comes from a register or immediate?',
+       options:['RegDst','MemtoReg','ALUSrc','Branch'],correct:2,
+       explanation:'ALUSrc=0: second ALU input from register rt. ALUSrc=1: from sign-extended immediate.'},
+    ],
+    formulas:[
+      {name:'Critical Path (lw)',f:'T = t_mem + t_rd + t_mux + t_ALU + t_mem + t_mux + t_wr',note:'Two memory accesses'},
+      {name:'PC Update',f:'PC = PC + 4',note:'Normal sequential execution'},
+      {name:'Branch Target',f:'PC = PC+4 + (imm16 << 2)',note:'Branch offset is word-aligned'},
+      {name:'ALU Control',f:'ALUOp + funct → 3-bit ALU control',note:'R-type: 00=add,01=sub,10=and,11=or'},
+      {name:'Sign Extension',f:'imm32 = SignExt(imm16)',note:'Replicate bit[15] to bits[31:16]'},
+      {name:'Jump Address',f:'PC[31:28] || target26 || 00',note:'J-type uses upper PC bits'},
+    ],
+    challenges:[
+      {q:'An R-type add has: t_reg=250ps, t_ALU=200ps, t_mem=350ps, t_mux=30ps. What is minimum clock period?',
+       answer:'760',unit:'ps',hint:'R-type path: t_reg(rd)+t_mux+t_ALU+t_mux+t_reg(wr) = 250+30+200+30+250 = 760ps'},
+    ]
+  },
+  {
+    id:'pipelining', title:'Pipelining', emoji:'🚀', color:'var(--gold)', accent:'--gold',
+    level:3, xpReward:400, unlocked:false,
+    description:'5-stage pipeline, hazards, forwarding, branch prediction',
+    flashcards:[
+      {q:'What are the 5 pipeline stages?',a:'IF — Instruction Fetch\nID — Instruction Decode\nEX — Execute (ALU)\nMEM — Memory Access\nWB — Write Back',example:'Each stage takes 1 cycle; 5 instructions overlap'},
+      {q:'What is a Data Hazard?',a:'Occurs when an instruction needs data that hasn\'t been produced yet by a previous instruction.',example:'add $t0,$t1,$t2\nsub $t3,$t0,$t4 ← needs $t0'},
+      {q:'What is Forwarding/Bypassing?',a:'Hardware technique passing ALU result directly to a later stage\'s input without waiting for write-back.',example:'EX/MEM → EX input (no stall needed)'},
+      {q:'What is a Load-Use Hazard?',a:'When lw is followed immediately by an instruction using the loaded value. Requires 1 bubble (stall).',example:'lw $t0,0($t1)\nadd $t2,$t0,$t3 ← 1 cycle stall unavoidable'},
+      {q:'What is a Control Hazard?',a:'Caused by branch instructions — we don\'t know the next PC until the branch resolves.',example:'beq at EX stage → 1 cycle penalty (if branch resolved in ID: 1 penalty)'},
+      {q:'What is a Structural Hazard?',a:'Two instructions need the same hardware resource simultaneously.',example:'Memory conflict if single memory for inst+data'},
+      {q:'What is pipeline speedup?',a:'Ideal speedup = number of stages.\nActual speedup reduced by stalls.',example:'5-stage ideal: 5×. With stalls: less.'},
+      {q:'What is the pipeline CPI?',a:'Ideal CPI = 1. Actual CPI = 1 + stall_cycles_per_instruction',example:'10% load-use → CPI = 1.1'},
+    ],
+    quizzes:[
+      {type:'mcq',q:'Which hazard requires a pipeline stall (bubble) even with forwarding?',
+       options:['EX-EX data hazard','Load-use hazard','RAW on R-type','Structural hazard in register file'],correct:1,
+       explanation:'Load-use: data is available only after MEM stage, too late for the immediately following EX stage. 1 stall is unavoidable.'},
+      {type:'mcq',q:'Forwarding from EX/MEM register solves which RAW hazard case?',
+       options:['2-cycle distance instruction','1-cycle distance instruction','Load immediately followed by use','Branch hazard'],correct:1,
+       explanation:'EX→EX forwarding helps when result is 1 cycle ahead. The value from EX/MEM latch can bypass directly to ALU input.'},
+      {type:'tf',q:'In a 5-stage pipeline, pipeline CPI can be less than 1.',
+       correct:false,explanation:'Minimum CPI=1 for in-order pipeline. Superscalar out-of-order processors can achieve CPI < 1.'},
+      {type:'tf',q:'A load-use hazard always requires exactly one stall cycle.',
+       correct:true,explanation:'Yes — lw result is ready after MEM stage. The dependent instruction needs it at EX, so exactly one bubble is inserted.'},
+      {type:'fill',q:'The 5 pipeline stages are: IF, ___, EX, MEM, WB.',
+       answer:'ID',explanation:'ID = Instruction Decode — reads registers and decodes control signals.'},
+      {type:'mcq',q:'Pipeline speedup formula:',
+       options:['Stages × (1 + stalls)','Stages / (1 + stalls/cycle)','1 / (stalls × stages)','Stages + stall_cycles'],correct:1,
+       explanation:'Speedup = N_stages / (1 + stall_rate) where stall_rate = avg stalls per instruction.'},
+      {type:'fill',q:'To handle branch hazards cheaply: assume branch ___ and flush if wrong.',
+       answer:'not taken',explanation:'Predict not-taken: continue fetching sequentially. Flush 1 instruction if branch is actually taken.'},
+    ],
+    formulas:[
+      {name:'Ideal Pipeline CPI',f:'CPI_ideal = 1',note:'One instruction completes per cycle'},
+      {name:'Actual CPI',f:'CPI_actual = 1 + stall_cycles_per_inst',note:'Stalls reduce throughput'},
+      {name:'Speedup',f:'S = N / (1 + stalls_per_inst)',note:'N = pipeline depth'},
+      {name:'Load-Use Stall',f:'stall = 1 cycle (unavoidable)',note:'lw followed by dependent inst'},
+      {name:'Branch Penalty',f:'penalty = stage_where_branch_resolved - 1',note:'Resolved at EX: 1 cycle; at MEM: 2 cycles'},
+      {name:'Pipeline Execution Time',f:'T = (IC + N - 1) × T_clk',note:'N = stages, fill + drain overhead'},
+    ],
+    challenges:[
+      {q:'A program has 100 instructions. 20% are loads, 50% of loads are followed by dependent instruction. No other hazards. What is total CPI?',
+       answer:'1.1',unit:'CPI',hint:'Load-use stalls = 0.20 × 0.50 = 0.10 per instruction. CPI = 1 + 0.10 = 1.10'},
+    ]
+  },
+  {
+    id:'memory', title:'Memory Hierarchy', emoji:'🧠', color:'var(--green)', accent:'--green',
+    level:4, xpReward:350, unlocked:false,
+    description:'Cache, AMAT, associativity, virtual memory, TLB',
+    flashcards:[
+      {q:'What is AMAT?',a:'Average Memory Access Time\nAMAT = Hit Time + Miss Rate × Miss Penalty',example:'L1 hit=2, miss=5%, penalty=100 → AMAT = 2+0.05×100 = 7'},
+      {q:'What is Cache Locality?',a:'Temporal: recently used items likely to be reused.\nSpatial: nearby memory locations likely accessed soon.',example:'Array traversal exploits spatial locality'},
+      {q:'What is Direct-Mapped Cache?',a:'Each memory block maps to exactly one cache line.\nIndex = (Block Address) mod (Number of Lines)',example:'Simple, fast, but high conflict miss rate'},
+      {q:'What is a Set-Associative Cache?',a:'Memory block can go in any line within a set.\nN-way: N lines per set — balance between DM and FA.',example:'4-way SA reduces conflict misses vs DM'},
+      {q:'What are the 3 C\'s of cache misses?',a:'Compulsory (cold) — first access\nCapacity — cache too small\nConflict — mapping restrictions',example:'Fully Associative eliminates conflict misses'},
+      {q:'What is a TLB?',a:'Translation Lookaside Buffer — fast cache for virtual-to-physical address translations.',example:'TLB hit: 1 cycle. TLB miss: page table walk (100s of cycles)'},
+      {q:'What is Write-Through vs Write-Back?',a:'Write-Through: update cache AND memory simultaneously.\nWrite-Back: update cache only; write to memory when evicted.',example:'Write-back requires dirty bit per cache line'},
+      {q:'What is the Page Table?',a:'Data structure mapping virtual page numbers to physical frames. Stored in main memory.',example:'2-level page table reduces memory overhead'},
+    ],
+    quizzes:[
+      {type:'mcq',q:'AMAT formula:',
+       options:['Hit Time × Miss Rate','Hit Time + Miss Rate × Miss Penalty','Miss Penalty / Hit Time','Hit Rate × Clock'],correct:1,
+       explanation:'AMAT = Hit Time + (Miss Rate × Miss Penalty). Lower miss rate AND lower miss penalty both improve AMAT.'},
+      {type:'mcq',q:'Which cache organization has the HIGHEST hit rate but most complex hardware?',
+       options:['Direct Mapped','2-way Set Associative','4-way Set Associative','Fully Associative'],correct:3,
+       explanation:'Fully Associative: any block can go anywhere → lowest conflict misses → highest hit rate. But needs CAM (content-addressable memory).'},
+      {type:'tf',q:'Increasing cache size always reduces the miss rate.',
+       correct:false,explanation:'Larger cache reduces capacity misses, but compulsory misses remain. Also, larger L1 increases hit time.'},
+      {type:'tf',q:'A TLB hit requires accessing the page table in memory.',
+       correct:false,explanation:'TLB is specifically designed to AVOID going to the page table. TLB hit → direct physical address without page table walk.'},
+      {type:'fill',q:'The three types of cache misses are: Compulsory, Capacity, and ___.',
+       answer:'Conflict',explanation:'Conflict misses occur when multiple blocks compete for the same cache set/line.'},
+      {type:'mcq',q:'Write-Back cache requires which extra bit per cache line?',
+       options:['Valid bit','Tag bit','Dirty bit','LRU bit'],correct:2,
+       explanation:'Dirty bit indicates the line has been modified and must be written back to memory before eviction.'},
+    ],
+    formulas:[
+      {name:'AMAT',f:'AMAT = H + M_r × M_p',note:'H=hit time, M_r=miss rate, M_p=miss penalty'},
+      {name:'Multi-level AMAT',f:'AMAT = H_L1 + m_L1×(H_L2 + m_L2×M_p)',note:'L1 miss → check L2'},
+      {name:'Cache Size',f:'Size = Sets × Ways × Block Size',note:'e.g., 256 sets × 4 ways × 64B = 64KB'},
+      {name:'Index Bits',f:'index = log₂(Sets)',note:'Used to select the cache set'},
+      {name:'Offset Bits',f:'offset = log₂(Block Size)',note:'Selects byte within block'},
+      {name:'Tag Bits',f:'tag = Address Bits - Index - Offset',note:'Remaining bits identify the block'},
+      {name:'Miss Rate',f:'miss_rate = 1 - hit_rate',note:'Fraction of accesses that miss'},
+    ],
+    challenges:[
+      {q:'L1 cache: hit=1 cycle, miss rate=5%, L2 hit=10 cycles, L2 miss rate=2%, main memory=200 cycles. Calculate AMAT.',
+       answer:'1.29',unit:'cycles',hint:'AMAT = 1 + 0.05×(10 + 0.02×200) = 1 + 0.05×14 = 1.70. Recompute carefully.'},
+    ]
+  },
+];
+
+const ACHIEVEMENTS = [
+  {id:'first_xp', title:'First Blood', desc:'Earn your first XP', icon:'⚡', threshold:10},
+  {id:'speed_learner', title:'Speed Learner', desc:'Complete a module in under 5 min', icon:'🏃', threshold:null},
+  {id:'perfect_quiz', title:'Perfect Score', desc:'Get 100% in a quiz', icon:'🎯', threshold:null},
+  {id:'streak_3', title:'On Fire!', desc:'3-day learning streak', icon:'🔥', threshold:3},
+  {id:'xp_500', title:'XP Hunter', desc:'Accumulate 500 XP', icon:'💎', threshold:500},
+  {id:'pipeline_master', title:'Pipeline Master', desc:'Complete Pipelining module', icon:'🚀', threshold:null},
+  {id:'cache_wizard', title:'Cache Wizard', desc:'Complete Memory module', icon:'🧠', threshold:null},
+  {id:'all_modules', title:'CPU Virtuoso', desc:'Complete all 4 modules', icon:'👑', threshold:null},
+];
+
+/* ═══════════════════════════════════════════════
+   UTILITY HOOKS
+═══════════════════════════════════════════════ */
+function useLocalStorage(key, initial) {
+  const [val, setVal] = useState(() => {
+    try { const s = localStorage.getItem(key); return s ? JSON.parse(s) : initial; }
+    catch { return initial; }
+  });
+  const save = useCallback(v => {
+    setVal(v);
+    try { localStorage.setItem(key, JSON.stringify(v)); } catch {}
+  }, [key]);
+  return [val, save];
+}
+
+function useTimer(initial=30, onExpire=()=>{}) {
+  const [time, setTime] = useState(initial);
+  const [running, setRunning] = useState(false);
+  const ref = useRef();
+  useEffect(() => {
+    if (running) {
+      ref.current = setInterval(() => setTime(t => {
+        if (t <= 1) { clearInterval(ref.current); setRunning(false); onExpire(); return 0; }
+        return t-1;
+      }), 1000);
+    }
+    return () => clearInterval(ref.current);
+  }, [running]);
+  const start = () => { setTime(initial); setRunning(true); };
+  const stop = () => { clearInterval(ref.current); setRunning(false); };
+  const reset = () => { clearInterval(ref.current); setRunning(false); setTime(initial); };
+  return {time, running, start, stop, reset};
+}
+
+/* ═══════════════════════════════════════════════
+   XP POPUP
+═══════════════════════════════════════════════ */
+function XPPop({amount, onDone}) {
+  useEffect(() => { const t = setTimeout(onDone, 1200); return () => clearTimeout(t); }, []);
+  return <div className="xp-pop">+{amount} XP ⚡</div>;
+}
+
+/* ═══════════════════════════════════════════════
+   ACHIEVEMENT POPUP
+═══════════════════════════════════════════════ */
+function AchievementPopup({achievement, onDone}) {
+  useEffect(() => { const t = setTimeout(onDone, 3500); return () => clearTimeout(t); }, []);
+  return (
+    <div className="achievement-popup">
+      <div style={{fontSize:36}}>{achievement.icon}</div>
+      <div>
+        <div style={{fontSize:11,color:'var(--gold)',letterSpacing:2,fontWeight:700,textTransform:'uppercase'}}>Achievement Unlocked!</div>
+        <div style={{fontWeight:800,fontSize:16,marginTop:2}}>{achievement.title}</div>
+        <div style={{fontSize:13,color:'var(--text-secondary)',marginTop:2}}>{achievement.desc}</div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   NAV BAR
+═══════════════════════════════════════════════ */
+function NavBar({xp, streak, level, onHome}) {
+  return (
+    <nav className="nav">
+      <div className="nav-logo" onClick={onHome} style={{cursor:'pointer'}}>COA QUEST</div>
+      <div className="nav-stats">
+        <div className="stat-chip" style={{color:'var(--gold)'}}>
+          <span>⚡</span><span>{xp} XP</span>
+        </div>
+        <div className="stat-chip" style={{color:'var(--cyan)'}}>
+          <span>LVL</span><span>{level}</span>
+        </div>
+        <div className="stat-chip" style={{color:'var(--orange)'}}>
+          <span className="flame">🔥</span><span>{streak}d</span>
+        </div>
+      </div>
+    </nav>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   HOME SCREEN
+═══════════════════════════════════════════════ */
+function HomeScreen({xp, streak, level, completed, onModule, onRevision}) {
+  const totalXP = MODULES.reduce((a,m)=>a+m.xpReward,0);
+  const unlockedModules = MODULES.map((m,i) => ({...m, unlocked: i===0 || completed.has(MODULES[i-1]?.id)}));
+
+  return (
+    <div className="main">
+      {/* Hero */}
+      <div className="card card-glow animate-slide-up" style={{padding:'32px',marginBottom:24,background:'linear-gradient(135deg, rgba(56,189,248,0.06), rgba(167,139,250,0.04))',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',right:24,top:24,fontSize:80,opacity:0.06}}>💻</div>
+        <div className="badge badge-cyan" style={{marginBottom:12}}>COMPUTER ORGANIZATION & ARCHITECTURE</div>
+        <h1 className="page-title" style={{marginBottom:8}}>Master <span>COA</span> Like a Game</h1>
+        <p style={{color:'var(--text-secondary)',fontSize:15,maxWidth:500,lineHeight:1.6,marginBottom:20}}>
+          4 modules · 30-minute mastery · XP rewards · Boss challenges
+        </p>
+        <div style={{display:'flex',gap:12,flexWrap:'wrap'}}>
+          <button className="btn btn-cyan btn-lg animate-pulse-glow" onClick={()=>onModule(unlockedModules.find(m=>!completed.has(m.id))?.id||'performance')}>
+            ▶ Continue Learning
+          </button>
+          <button className="btn btn-ghost" onClick={onRevision}>⭐ Quick Revision</button>
+        </div>
+      </div>
+
+      {/* Overall progress */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',gap:16,marginBottom:24}}>
+        {[
+          {label:'Total XP',val:xp,max:totalXP,color:'gold',icon:'⚡'},
+          {label:'Modules Done',val:completed.size,max:MODULES.length,color:'green',icon:'✅'},
+          {label:'Level',val:level,max:10,color:'',icon:'🏆'},
+          {label:'Streak',val:streak,max:7,color:'',icon:'🔥'},
+        ].map(item => (
+          <div key={item.label} className="card" style={{padding:'16px 20px'}}>
+            <div style={{fontSize:24,marginBottom:6}}>{item.icon}</div>
+            <div style={{fontSize:26,fontWeight:900,color:item.color?`var(--${item.color})`:'var(--cyan)'}}>{item.val}</div>
+            <div style={{fontSize:12,color:'var(--text-dim)',textTransform:'uppercase',letterSpacing:1}}>{item.label}</div>
+            {item.max && <div className={`progress-bar ${item.color}`} style={{marginTop:8}}>
+              <div className="progress-fill" style={{width:`${(item.val/item.max)*100}%`}}/>
+            </div>}
+          </div>
+        ))}
+      </div>
+
+      {/* Modules Grid */}
+      <div className="section-title">◈ Mission Select</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:16,marginBottom:24}}>
+        {unlockedModules.map((mod,i) => (
+          <div
+            key={mod.id}
+            className={`module-card ${mod.unlocked?'':'locked'} ${completed.has(mod.id)?'completed':''}`}
+            style={{'--accent':mod.color,'--accent-dim':mod.color.replace('var(--','rgba(').replace(')',',0.1)')}}
+            onClick={()=>mod.unlocked && onModule(mod.id)}
+          >
+            {completed.has(mod.id) && <div className="badge badge-green" style={{position:'absolute',top:16,right:16}}>✓ Done</div>}
+            {!mod.unlocked && <div className="badge badge-red" style={{position:'absolute',top:16,right:16}}>🔒 Locked</div>}
+            <div style={{fontSize:40,marginBottom:12}}>{mod.emoji}</div>
+            <div className="hex-level" style={{marginBottom:12,background:`linear-gradient(135deg,${mod.color},${mod.color}88)`}}>
+              {mod.level}
+            </div>
+            <h3 style={{fontFamily:'var(--font-display)',fontWeight:800,fontSize:20,marginBottom:6}}>{mod.title}</h3>
+            <p style={{fontSize:13,color:'var(--text-secondary)',lineHeight:1.5,marginBottom:12}}>{mod.description}</p>
+            <div style={{display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+              <span className="badge badge-gold">+{mod.xpReward} XP</span>
+              {mod.unlocked && <span style={{color:mod.color,fontSize:13,fontWeight:700}}>ENTER →</span>}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Achievements */}
+      <div className="section-title">◈ Achievements</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(200px,1fr))',gap:12}}>
+        {ACHIEVEMENTS.map(ach => (
+          <div key={ach.id} className="card" style={{padding:'14px 16px',opacity:0.5+Math.random()*0.3}}>
+            <div style={{fontSize:28,marginBottom:6}}>{ach.icon}</div>
+            <div style={{fontWeight:700,fontSize:14}}>{ach.title}</div>
+            <div style={{fontSize:12,color:'var(--text-dim)',marginTop:3}}>{ach.desc}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   FLASHCARDS MODE
+═══════════════════════════════════════════════ */
+function FlashcardsMode({cards, onXP}) {
+  const [idx, setIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+  const [seen, setSeen] = useState(new Set());
+
+  const card = cards[idx];
+  const progress = (seen.size / cards.length) * 100;
+
+  const next = () => {
+    setSeen(s => new Set([...s, idx]));
+    if (!seen.has(idx)) onXP(15);
+    setFlipped(false);
+    setTimeout(() => setIdx(i => (i+1) % cards.length), 50);
+  };
+  const prev = () => { setFlipped(false); setTimeout(()=>setIdx(i=>(i-1+cards.length)%cards.length),50); };
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+        <div style={{fontSize:14,color:'var(--text-secondary)'}}>Card {idx+1} / {cards.length}</div>
+        <span className="badge badge-green">{seen.size} Learned</span>
+      </div>
+      <div className="progress-bar green" style={{marginBottom:24}}>
+        <div className="progress-fill" style={{width:`${progress}%`}}/>
+      </div>
+
+      <div className="flashcard-container" onClick={()=>setFlipped(f=>!f)}>
+        <div className={`flashcard-inner ${flipped?'flipped':''}`}>
+          <div className="flashcard-face flashcard-front">
+            <div style={{fontSize:11,letterSpacing:3,color:'var(--cyan)',textTransform:'uppercase',marginBottom:16}}>Question</div>
+            <div style={{fontSize:20,fontWeight:700,lineHeight:1.5,textAlign:'center'}}>{card.q}</div>
+            <div style={{position:'absolute',bottom:20,color:'var(--text-dim)',fontSize:12}}>Tap to reveal →</div>
+          </div>
+          <div className="flashcard-face flashcard-back">
+            <div style={{fontSize:11,letterSpacing:3,color:'var(--purple)',textTransform:'uppercase',marginBottom:12}}>Answer</div>
+            <div style={{fontSize:16,lineHeight:1.7,fontFamily:'var(--font-mono)',color:'var(--text-primary)',whiteSpace:'pre-line',textAlign:'center',marginBottom:12}}>
+              {card.a}
+            </div>
+            {card.example && (
+              <div style={{background:'rgba(56,189,248,0.08)',border:'1px solid rgba(56,189,248,0.2)',borderRadius:8,padding:'8px 12px',fontSize:12,color:'var(--cyan)',fontFamily:'var(--font-mono)'}}>
+                💡 {card.example}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div style={{display:'flex',justifyContent:'center',gap:12,marginTop:20}}>
+        <button className="btn btn-ghost" onClick={prev}>← Prev</button>
+        {flipped && (
+          <>
+            <button className="btn btn-danger btn-sm" onClick={next}>😅 Again</button>
+            <button className="btn btn-green btn-sm" onClick={next}>✓ Got it!</button>
+          </>
+        )}
+        <button className="btn btn-ghost" onClick={next}>Next →</button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   QUIZ MODE
+═══════════════════════════════════════════════ */
+function QuizMode({quizzes, onXP, color}) {
+  const [qIdx, setQIdx] = useState(0);
+  const [selected, setSelected] = useState(null);
+  const [showExp, setShowExp] = useState(false);
+  const [score, setScore] = useState(0);
+  const [done, setDone] = useState(false);
+  const [tfInput, setTfInput] = useState(null);
+  const [fillInput, setFillInput] = useState('');
+  const [fillResult, setFillResult] = useState(null);
+  const timer = useTimer(30, () => { if(!selected && !showExp) handleAnswer(null); });
+  const [timerStarted, setTimerStarted] = useState(false);
+
+  useEffect(() => { if(!timerStarted){ timer.start(); setTimerStarted(true); } }, []);
+  useEffect(() => { timer.reset(); timer.start(); }, [qIdx]);
+
+  const q = quizzes[qIdx];
+  const totalQ = quizzes.length;
+
+  const handleAnswer = (idx) => {
+    timer.stop();
+    setSelected(idx);
+    setShowExp(true);
+
+    let correct = false;
+    if(q.type==='mcq') correct = idx === q.correct;
+    else if(q.type==='tf') correct = idx === q.correct;
+
+    if(correct){ setScore(s=>s+1); onXP(20); }
+    else onXP(5);
+  };
+
+  const handleFill = () => {
+    timer.stop();
+    const isCorrect = fillInput.trim().toLowerCase() === q.answer.toLowerCase();
+    setFillResult(isCorrect);
+    setShowExp(true);
+    if(isCorrect){ setScore(s=>s+1); onXP(25); } else onXP(5);
+  };
+
+  const nextQ = () => {
+    if(qIdx+1 >= totalQ) { setDone(true); return; }
+    setQIdx(i=>i+1); setSelected(null); setShowExp(false); setTfInput(null);
+    setFillInput(''); setFillResult(null); timer.reset(); timer.start();
+  };
+
+  const reset = () => {
+    setQIdx(0); setSelected(null); setShowExp(false); setScore(0);
+    setDone(false); timer.reset(); timer.start();
+  };
+
+  const pct = Math.round((score/totalQ)*100);
+
+  if(done) return (
+    <div style={{textAlign:'center',padding:'32px 0'}}>
+      <div style={{fontSize:64,marginBottom:16}}>{pct>=80?'🏆':pct>=50?'👍':'💪'}</div>
+      <h2 style={{fontSize:32,fontWeight:900,marginBottom:8}}>Quiz Complete!</h2>
+      <div style={{fontSize:48,fontWeight:900,color:pct>=80?'var(--green)':pct>=50?'var(--gold)':'var(--red)',marginBottom:12}}>
+        {score}/{totalQ}
+      </div>
+      <div className={`badge ${pct>=80?'badge-green':pct>=50?'badge-gold':'badge-red'}`} style={{fontSize:16,padding:'6px 20px',marginBottom:24}}>
+        {pct}% Correct
+      </div>
+      <div style={{display:'flex',justifyContent:'center',gap:12}}>
+        <button className="btn btn-cyan" onClick={reset}>Try Again</button>
+      </div>
+    </div>
+  );
+
+  const timerColor = timer.time > 15 ? 'var(--cyan)' : timer.time > 7 ? 'var(--gold)' : 'var(--red)';
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div style={{fontSize:13,color:'var(--text-secondary)'}}>Q{qIdx+1}/{totalQ}</div>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:22,fontWeight:700,color:timerColor}}>{timer.time}s</div>
+        <div style={{fontSize:13,color:'var(--gold)'}}>Score: {score}</div>
+      </div>
+
+      {/* Timer bar */}
+      <div className="progress-bar" style={{marginBottom:20,height:4}}>
+        <div className="progress-fill" style={{
+          width:`${(timer.time/30)*100}%`,
+          background:`linear-gradient(90deg,${timerColor},${timerColor}88)`,
+          transition:'width 1s linear'
+        }}/>
+      </div>
+
+      <div className="card card-glow" style={{padding:'20px',marginBottom:16,background:'rgba(56,189,248,0.04)'}}>
+        <div className={`badge ${q.type==='mcq'?'badge-cyan':q.type==='tf'?'badge-purple':'badge-gold'}`} style={{marginBottom:10}}>
+          {q.type==='mcq'?'Multiple Choice':q.type==='tf'?'True / False':'Fill in the Blank'}
+        </div>
+        <p style={{fontSize:17,fontWeight:600,lineHeight:1.6}}>{q.q}</p>
+      </div>
+
+      {q.type === 'mcq' && (
+        <div style={{display:'flex',flexDirection:'column',gap:10}}>
+          {q.options.map((opt,i) => (
+            <div
+              key={i}
+              className={`quiz-option ${showExp?(i===q.correct?'correct':selected===i?'wrong':''):selected===i?'selected':''}`}
+              onClick={()=>!showExp && handleAnswer(i)}
+            >
+              <div className="option-key">{['A','B','C','D'][i]}</div>
+              <span>{opt}</span>
+              {showExp && i===q.correct && <span style={{marginLeft:'auto',color:'var(--green)'}}>✓</span>}
+              {showExp && selected===i && i!==q.correct && <span style={{marginLeft:'auto',color:'var(--red)'}}>✗</span>}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {q.type === 'tf' && (
+        <div style={{display:'flex',gap:12}}>
+          {[true,false].map(v => (
+            <div
+              key={String(v)}
+              className={`quiz-option ${showExp?(v===q.correct?'correct':tfInput===v?'wrong':''):tfInput===v?'selected':''}`}
+              style={{flex:1,justifyContent:'center',fontSize:18,fontWeight:700}}
+              onClick={()=>!showExp && (setTfInput(v), handleAnswer(v))}
+            >
+              {v ? '✓ True' : '✗ False'}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {q.type === 'fill' && (
+        <div>
+          <div style={{color:'var(--text-secondary)',fontSize:13,marginBottom:8,fontFamily:'var(--font-mono)'}}>
+            Type your answer:
+          </div>
+          <input
+            className={`fill-input ${fillResult===true?'correct':fillResult===false?'wrong':''}`}
+            value={fillInput}
+            onChange={e=>setFillInput(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&!showExp&&handleFill()}
+            disabled={showExp}
+            placeholder="Type here..."
+          />
+          {!showExp && <button className="btn btn-cyan" style={{marginTop:12,width:'100%'}} onClick={handleFill}>Submit</button>}
+        </div>
+      )}
+
+      {showExp && (
+        <div className="animate-slide-up" style={{
+          marginTop:16,padding:'14px 16px',
+          background:'rgba(56,189,248,0.06)',
+          border:'1px solid rgba(56,189,248,0.2)',
+          borderRadius:10
+        }}>
+          <div style={{fontSize:12,letterSpacing:2,color:'var(--cyan)',textTransform:'uppercase',marginBottom:6}}>💡 Explanation</div>
+          <p style={{fontSize:14,color:'var(--text-secondary)',lineHeight:1.6}}>{q.explanation}</p>
+        </div>
+      )}
+
+      {showExp && (
+        <button className="btn btn-cyan" style={{marginTop:16,width:'100%'}} onClick={nextQ}>
+          {qIdx+1>=totalQ ? '🏁 View Results' : 'Next Question →'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   LEARN MODE
+═══════════════════════════════════════════════ */
+function LearnMode({module, onXP}) {
+  const [step, setStep] = useState(0);
+  const [reading, setReading] = useState(new Set());
+
+  const cards = module.flashcards;
+  const totalSteps = cards.length;
+  const card = cards[step];
+
+  const markRead = () => {
+    if(!reading.has(step)) { setReading(s=>new Set([...s,step])); onXP(10); }
+    if(step < totalSteps-1) setStep(s=>s+1);
+  };
+
+  const PipelineViz = () => {
+    const stages = ['IF','ID','EX','MEM','WB'];
+    return (
+      <div style={{display:'flex',alignItems:'center',gap:4,flexWrap:'wrap',marginTop:12,justifyContent:'center'}}>
+        {stages.map((s,i) => (
+          <React.Fragment key={s}>
+            <div className={`pipeline-stage ${i<=step%5?'active':''}`}>{s}</div>
+            {i<4 && <div className="pipeline-arrow">→</div>}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
+  const DatapathViz = () => {
+    const nodes = ['PC','IM','RF','ALU','DM','WB'];
+    const [active, setActive] = useState(-1);
+    useEffect(()=>{
+      let i=-1;
+      const t = setInterval(()=>{ i=(i+1)%nodes.length; setActive(i); }, 700);
+      return ()=>clearInterval(t);
+    },[]);
+    return (
+      <div style={{display:'flex',alignItems:'center',gap:6,flexWrap:'wrap',marginTop:12,justifyContent:'center'}}>
+        {nodes.map((n,i)=>(
+          <React.Fragment key={n}>
+            <div className={`dp-node ${active===i?'active':''}`}>{n}</div>
+            {i<nodes.length-1 && <span style={{color:'var(--text-dim)'}}>→</span>}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
+  const MemHierarchy = () => {
+    const tiers = [
+      {name:'Registers',size:'KB',speed:'<1 ns',color:'var(--cyan)',width:'30%'},
+      {name:'L1 Cache',size:'32–64 KB',speed:'~1 ns',color:'var(--purple)',width:'50%'},
+      {name:'L2 Cache',size:'256 KB – 4 MB',speed:'~5 ns',color:'var(--gold)',width:'65%'},
+      {name:'RAM',size:'8–64 GB',speed:'~100 ns',color:'var(--orange)',width:'80%'},
+      {name:'SSD/HDD',size:'TB',speed:'ms',color:'var(--green)',width:'95%'},
+    ];
+    return (
+      <div style={{marginTop:12}}>
+        {tiers.map(t=>(
+          <div key={t.name} style={{
+            background:`${t.color}15`,border:`1px solid ${t.color}40`,
+            borderRadius:8,padding:'8px 14px',margin:'4px auto',
+            width:t.width,display:'flex',justifyContent:'space-between',
+            fontSize:12,fontWeight:700
+          }}>
+            <span>{t.name}</span>
+            <span style={{color:t.color}}>{t.speed}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  const getViz = () => {
+    if(module.id==='pipelining') return <PipelineViz/>;
+    if(module.id==='datapath') return <DatapathViz/>;
+    if(module.id==='memory') return <MemHierarchy/>;
+    return null;
+  };
+
+  return (
+    <div>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:12}}>
+        <div style={{fontSize:13,color:'var(--text-secondary)'}}>Concept {step+1} of {totalSteps}</div>
+        <span className="badge badge-cyan">{reading.size} Read</span>
+      </div>
+      <div className="progress-bar" style={{marginBottom:24}}>
+        <div className="progress-fill" style={{width:`${((step+1)/totalSteps)*100}%`}}/>
+      </div>
+
+      <div className="card card-glow animate-pop" key={step} style={{padding:'24px',marginBottom:16}}>
+        <div className="badge badge-purple" style={{marginBottom:12}}>Concept #{step+1}</div>
+        <h3 style={{fontSize:20,fontWeight:800,marginBottom:12,fontFamily:'var(--font-display)'}}>{card.q}</h3>
+        <div className="divider-glow"/>
+        <div style={{fontFamily:'var(--font-mono)',fontSize:14,lineHeight:1.9,color:'var(--text-secondary)',whiteSpace:'pre-line',marginBottom:12}}>
+          {card.a}
+        </div>
+        {card.example && (
+          <div className="formula-box">
+            <span style={{color:'var(--gold)'}}>Example: </span>{card.example}
+          </div>
+        )}
+        {step <= 2 && getViz()}
+      </div>
+
+      <div style={{display:'flex',gap:10,justifyContent:'space-between',flexWrap:'wrap'}}>
+        {step > 0 && <button className="btn btn-ghost" onClick={()=>setStep(s=>s-1)}>← Previous</button>}
+        <button className="btn btn-cyan" style={{marginLeft:'auto'}} onClick={markRead}>
+          {step < totalSteps-1 ? '✓ Got it! Next →' : '🏁 Complete!'}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   CHALLENGE MODE
+═══════════════════════════════════════════════ */
+function ChallengeMode({module, onXP}) {
+  const [idx, setIdx] = useState(0);
+  const [input, setInput] = useState('');
+  const [result, setResult] = useState(null);
+  const [showHint, setShowHint] = useState(false);
+  const [attempts, setAttempts] = useState(0);
+  const challenges = module.challenges;
+  const c = challenges[idx];
+
+  const check = () => {
+    const val = parseFloat(input.replace(',','.'));
+    const expected = parseFloat(c.answer);
+    const correct = Math.abs(val - expected) < 0.02 * Math.abs(expected) + 0.05;
+    setResult(correct ? 'correct' : 'wrong');
+    setAttempts(a=>a+1);
+    if(correct) onXP(attempts===0 ? 50 : 25);
+  };
+
+  const next = () => {
+    if(idx+1 < challenges.length) {
+      setIdx(i=>i+1); setInput(''); setResult(null); setShowHint(false); setAttempts(0);
+    }
+  };
+
+  if(!challenges.length) return (
+    <div style={{textAlign:'center',padding:'40px',color:'var(--text-secondary)'}}>
+      <div style={{fontSize:48,marginBottom:12}}>🏗️</div>
+      <p>Challenges coming soon for this module!</p>
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="boss-card animate-slide-up" style={{marginBottom:20}}>
+        <div className="badge badge-red" style={{marginBottom:12}}>⚡ Numerical Challenge {idx+1}/{challenges.length}</div>
+        <p style={{fontSize:17,fontWeight:600,lineHeight:1.7,marginBottom:16}}>{c.q}</p>
+        <div style={{display:'flex',alignItems:'center',gap:12,flexWrap:'wrap'}}>
+          <input
+            className={`fill-input ${result?result:''}`}
+            style={{flex:1,maxWidth:200}}
+            value={input}
+            onChange={e=>setInput(e.target.value)}
+            onKeyDown={e=>e.key==='Enter'&&!result&&check()}
+            placeholder="Your answer..."
+            disabled={!!result}
+          />
+          <span style={{color:'var(--text-secondary)',fontSize:14,fontWeight:700}}>{c.unit}</span>
+          {!result && <button className="btn btn-cyan" onClick={check}>Submit</button>}
+        </div>
+      </div>
+
+      {!result && (
+        <button className="btn btn-ghost btn-sm" onClick={()=>setShowHint(h=>!h)}>
+          {showHint?'Hide Hint':'💡 Show Hint'}
+        </button>
+      )}
+      {showHint && (
+        <div className="formula-box animate-slide-up" style={{marginTop:8}}>
+          <span style={{color:'var(--gold)'}}>Hint: </span>{c.hint}
+        </div>
+      )}
+
+      {result === 'correct' && (
+        <div className="animate-pop" style={{marginTop:16,padding:'16px',background:'var(--green-dim)',border:'1px solid var(--green)',borderRadius:12,textAlign:'center'}}>
+          <div style={{fontSize:32}}>🎉</div>
+          <div style={{fontSize:20,fontWeight:800,color:'var(--green)'}}>Correct! +{attempts===0?50:25} XP</div>
+          <div style={{color:'var(--text-secondary)',marginTop:4,fontFamily:'var(--font-mono)'}}>Answer: {c.answer} {c.unit}</div>
+          {idx+1 < challenges.length && (
+            <button className="btn btn-green" style={{marginTop:12}} onClick={next}>Next Challenge →</button>
+          )}
+        </div>
+      )}
+      {result === 'wrong' && (
+        <div className="animate-shake" style={{marginTop:16,padding:'14px',background:'var(--red-dim)',border:'1px solid var(--red)',borderRadius:12}}>
+          <div style={{color:'var(--red)',fontWeight:700}}>✗ Not quite! Check your calculation.</div>
+          <div style={{fontSize:12,color:'var(--text-secondary)',marginTop:4}}>
+            Expected ≈ {c.answer} {c.unit}
+          </div>
+          <button className="btn btn-ghost btn-sm" style={{marginTop:8}} onClick={()=>{setResult(null);setInput('')}}>Try Again</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   PERFORMANCE SIMULATOR (Interactive)
+═══════════════════════════════════════════════ */
+function PerfSimulator() {
+  const [ic, setIc] = useState(2);
+  const [cpi, setCpi] = useState(2);
+  const [clock, setClock] = useState(2);
+  const time = (ic * 1e9 * cpi / (clock * 1e9)).toFixed(2);
+  const mips = Math.round(clock * 1e9 / (cpi * 1e6));
+
+  return (
+    <div className="card" style={{padding:20,marginTop:16}}>
+      <div className="badge badge-cyan" style={{marginBottom:12}}>⚡ Live Performance Calculator</div>
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(200px,1fr))',gap:16,marginBottom:16}}>
+        {[
+          {label:'Instruction Count (×10⁹)', val:ic, set:setIc, min:0.1, max:10, step:0.1},
+          {label:'CPI', val:cpi, set:setCpi, min:0.5, max:10, step:0.5},
+          {label:'Clock Rate (GHz)', val:clock, set:setClock, min:0.5, max:5, step:0.5},
+        ].map(s => (
+          <div key={s.label}>
+            <div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:6}}>{s.label}</div>
+            <div style={{fontSize:22,fontWeight:800,color:'var(--cyan)',fontFamily:'var(--font-mono)',marginBottom:8}}>{s.val}</div>
+            <input type="range" className="slider-track"
+              min={s.min} max={s.max} step={s.step} value={s.val}
+              onChange={e=>s.set(parseFloat(e.target.value))}/>
+          </div>
+        ))}
+      </div>
+      <div className="divider-glow"/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+        <div style={{textAlign:'center',padding:'16px',background:'var(--cyan-dim)',borderRadius:10,border:'1px solid rgba(56,189,248,0.3)'}}>
+          <div style={{fontSize:11,letterSpacing:2,color:'var(--text-dim)',textTransform:'uppercase'}}>CPU Time</div>
+          <div style={{fontSize:32,fontWeight:900,color:'var(--cyan)',fontFamily:'var(--font-mono)'}}>{time}s</div>
+        </div>
+        <div style={{textAlign:'center',padding:'16px',background:'var(--gold-dim)',borderRadius:10,border:'1px solid rgba(251,191,36,0.3)'}}>
+          <div style={{fontSize:11,letterSpacing:2,color:'var(--text-dim)',textTransform:'uppercase'}}>Performance</div>
+          <div style={{fontSize:32,fontWeight:900,color:'var(--gold)',fontFamily:'var(--font-mono)'}}>{mips}M<span style={{fontSize:16}}>IPS</span></div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MODULE SCREEN
+═══════════════════════════════════════════════ */
+function ModuleScreen({moduleId, onBack, onComplete, onXP, addXP}) {
+  const module = MODULES.find(m=>m.id===moduleId);
+  const [tab, setTab] = useState('learn');
+
+  if(!module) return null;
+
+  const tabs = [
+    {id:'learn',label:'📖 Learn'},
+    {id:'flash',label:'🃏 Flashcards'},
+    {id:'quiz',label:'🎯 Quiz'},
+    {id:'challenge',label:'⚔️ Challenge'},
+  ];
+  if(moduleId==='performance') tabs.push({id:'sim',label:'🧮 Simulator'});
+
+  return (
+    <div className="main">
+      {/* Header */}
+      <div style={{display:'flex',alignItems:'center',gap:16,marginBottom:20}}>
+        <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
+        <div>
+          <div style={{display:'flex',alignItems:'center',gap:10}}>
+            <span style={{fontSize:28}}>{module.emoji}</span>
+            <h2 style={{fontFamily:'var(--font-display)',fontWeight:900,fontSize:24}}>{module.title}</h2>
+            <div className="badge badge-gold">+{module.xpReward} XP</div>
+          </div>
+          <p style={{color:'var(--text-secondary)',fontSize:13,marginTop:4}}>{module.description}</p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="tab-bar" style={{marginBottom:20}}>
+        {tabs.map(t => (
+          <button key={t.id} className={`tab ${tab===t.id?'active':''}`} onClick={()=>setTab(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      <div className="card" style={{padding:'24px'}}>
+        {tab==='learn' && <LearnMode module={module} onXP={addXP}/>}
+        {tab==='flash' && <FlashcardsMode cards={module.flashcards} onXP={addXP}/>}
+        {tab==='quiz' && <QuizMode key={tab} quizzes={module.quizzes} onXP={addXP} color={module.color}/>}
+        {tab==='challenge' && <ChallengeMode module={module} onXP={addXP}/>}
+        {tab==='sim' && <PerfSimulator/>}
+      </div>
+
+      {/* Boss Challenge */}
+      <div className="boss-card" style={{marginTop:20}}>
+        <div className="badge badge-red" style={{marginBottom:8}}>👹 BOSS LEVEL</div>
+        <h3 style={{fontWeight:800,fontSize:18,marginBottom:6}}>Final Challenge: {module.title}</h3>
+        <p style={{color:'var(--text-secondary)',fontSize:13,marginBottom:12}}>
+          Complete all modes above, then attempt the boss for full XP reward.
+        </p>
+        <button className="btn btn-danger" onClick={()=>{addXP(module.xpReward); onComplete(module.id);}}>
+          ⚔️ Complete Module (+{module.xpReward} XP)
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   REVISION SHEET
+═══════════════════════════════════════════════ */
+function RevisionSheet({onBack}) {
+  const [activeModule, setActiveModule] = useState('all');
+  const [flashMode, setFlashMode] = useState(false);
+  const [fIdx, setFIdx] = useState(0);
+  const [flipped, setFlipped] = useState(false);
+
+  const allFormulas = MODULES.flatMap(m => m.formulas.map(f=>({...f,module:m.title,color:m.color})));
+  const filtered = activeModule==='all' ? allFormulas : allFormulas.filter(f=>f.module===MODULES.find(m=>m.id===activeModule)?.title);
+
+  if(flashMode) {
+    const card = filtered[fIdx];
+    return (
+      <div className="main">
+        <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:20}}>
+          <button className="btn btn-ghost btn-sm" onClick={()=>setFlashMode(false)}>← Back to Sheet</button>
+          <h2 style={{fontFamily:'var(--font-display)',fontWeight:900}}>Formula Flashcards</h2>
+        </div>
+        <div className="flashcard-container" onClick={()=>setFlipped(f=>!f)}>
+          <div className={`flashcard-inner ${flipped?'flipped':''}`}>
+            <div className="flashcard-face flashcard-front">
+              <div className="badge badge-gold" style={{marginBottom:12}}>{card.module}</div>
+              <div style={{fontSize:22,fontWeight:700,marginBottom:8}}>{card.name}</div>
+              <div style={{color:'var(--text-dim)',fontSize:13}}>Tap to see formula →</div>
+            </div>
+            <div className="flashcard-face flashcard-back">
+              <div className="badge badge-cyan" style={{marginBottom:12}}>{card.name}</div>
+              <div style={{fontFamily:'var(--font-mono)',fontSize:22,color:'var(--cyan)',marginBottom:12}}>{card.f}</div>
+              <div style={{fontSize:13,color:'var(--text-secondary)'}}>{card.note}</div>
+            </div>
+          </div>
+        </div>
+        <div style={{display:'flex',justifyContent:'center',gap:12,marginTop:20}}>
+          <button className="btn btn-ghost" onClick={()=>{setFIdx(i=>(i-1+filtered.length)%filtered.length);setFlipped(false)}}>← Prev</button>
+          <span style={{color:'var(--text-dim)',alignSelf:'center'}}>{fIdx+1}/{filtered.length}</span>
+          <button className="btn btn-ghost" onClick={()=>{setFIdx(i=>(i+1)%filtered.length);setFlipped(false)}}>Next →</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="main">
+      <div style={{display:'flex',gap:12,alignItems:'center',marginBottom:20,flexWrap:'wrap'}}>
+        <button className="btn btn-ghost btn-sm" onClick={onBack}>← Back</button>
+        <h1 className="page-title" style={{fontSize:28}}>⭐ <span>Ultra Fast</span> Revision</h1>
+        <button className="btn btn-gold btn-sm" style={{marginLeft:'auto'}} onClick={()=>{setFlashMode(true);setFIdx(0);setFlipped(false)}}>
+          🃏 Formula Flashcards
+        </button>
+      </div>
+
+      <div className="tab-bar" style={{marginBottom:20}}>
+        {[{id:'all',label:'All'}, ...MODULES.map(m=>({id:m.id,label:m.emoji+' '+m.title}))].map(t => (
+          <button key={t.id} className={`tab ${activeModule===t.id?'active':''}`} onClick={()=>setActiveModule(t.id)}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(300px,1fr))',gap:12}}>
+        {filtered.map((f,i) => (
+          <div key={i} className="card" style={{padding:'16px',borderLeft:`3px solid ${f.color}`}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginBottom:6}}>
+              <div style={{fontWeight:700,fontSize:14}}>{f.name}</div>
+              <span className="badge badge-cyan" style={{fontSize:10}}>{f.module}</span>
+            </div>
+            <div className="formula-box" style={{margin:'6px 0',fontSize:13}}>{f.f}</div>
+            <div style={{fontSize:12,color:'var(--text-dim)'}}>{f.note}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Quick Reference Table */}
+      <div style={{marginTop:24}}>
+        <div className="section-title">◈ Quick Reference — Control Signals</div>
+        <div className="card" style={{padding:'16px',overflowX:'auto'}}>
+          <table style={{width:'100%',borderCollapse:'collapse',fontSize:13,fontFamily:'var(--font-mono)'}}>
+            <thead>
+              <tr>
+                {['Instruction','RegDst','ALUSrc','MemtoReg','RegWrite','MemRead','MemWrite','Branch'].map(h=>(
+                  <th key={h} style={{padding:'8px 10px',borderBottom:'1px solid var(--border)',color:'var(--cyan)',textAlign:'left',fontSize:11,letterSpacing:1}}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['R-type','1','0','0','1','0','0','0'],
+                ['lw','0','1','1','1','1','0','0'],
+                ['sw','X','1','X','0','0','1','0'],
+                ['beq','X','0','X','0','0','0','1'],
+                ['addi','0','1','0','1','0','0','0'],
+              ].map((row,i) => (
+                <tr key={i} style={{borderBottom:'1px solid var(--border)'}}>
+                  {row.map((cell,j) => (
+                    <td key={j} style={{
+                      padding:'10px',
+                      color: j===0?'var(--text-primary)':cell==='1'?'var(--green)':cell==='0'?'var(--text-dim)':'var(--gold)',
+                      fontWeight: j===0?700:400
+                    }}>{cell}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Hazard Reference */}
+      <div style={{marginTop:24}}>
+        <div className="section-title">◈ Pipeline Hazard Quick Reference</div>
+        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))',gap:12}}>
+          {[
+            {type:'Data Hazard (RAW)', sol:'Forwarding / Stall', stalls:'0 with forwarding, 1 for load-use', color:'var(--cyan)'},
+            {type:'Load-Use Hazard', sol:'1 bubble (stall)', stalls:'1 cycle mandatory', color:'var(--gold)'},
+            {type:'Control Hazard', sol:'Predict not-taken / Branch delay slot', stalls:'1-2 cycles if wrong', color:'var(--red)'},
+            {type:'Structural Hazard', sol:'Separate I/D memory (MIPS solved)', stalls:'0 in standard MIPS', color:'var(--purple)'},
+          ].map(h => (
+            <div key={h.type} className="card" style={{padding:'14px',borderLeft:`3px solid ${h.color}`}}>
+              <div style={{fontWeight:700,marginBottom:4,color:h.color}}>{h.type}</div>
+              <div style={{fontSize:12,color:'var(--text-secondary)',marginBottom:4}}>Solution: {h.sol}</div>
+              <div className="badge" style={{background:h.color+'22',color:h.color,border:`1px solid ${h.color}44`,fontSize:11}}>{h.stalls}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════ */
+function App() {
+  const [xp, setXP] = useLocalStorage('coa_xp', 0);
+  const [streak, setStreak] = useLocalStorage('coa_streak', 1);
+  const [completed, setCompleted] = useLocalStorage('coa_completed', []);
+  const [screen, setScreen] = useState('home'); // home | module | revision
+  const [activeModule, setActiveModule] = useState(null);
+  const [xpPops, setXpPops] = useState([]);
+  const [achievements, setAchievements] = useState([]);
+  const [showAchievement, setShowAchievement] = useState(null);
+
+  const completedSet = new Set(completed);
+  const level = Math.floor(xp / 100) + 1;
+
+  const addXP = useCallback((amount) => {
+    setXP(x => {
+      const newXP = x + amount;
+      // Check XP achievements
+      if(newXP >= 500 && x < 500) unlockAchievement('xp_500');
+      return newXP;
+    });
+    const id = Date.now();
+    setXpPops(p => [...p, {id, amount}]);
+  }, []);
+
+  const unlockAchievement = (id) => {
+    if(!achievements.includes(id)) {
+      setAchievements(a => [...a, id]);
+      const ach = ACHIEVEMENTS.find(a=>a.id===id);
+      if(ach) setShowAchievement(ach);
+    }
+  };
+
+  const completeModule = (moduleId) => {
+    if(!completedSet.has(moduleId)) {
+      setCompleted(c => [...c, moduleId]);
+      if(moduleId==='pipelining') unlockAchievement('pipeline_master');
+      if(moduleId==='memory') unlockAchievement('cache_wizard');
+      const newCompleted = new Set([...completed, moduleId]);
+      if(newCompleted.size >= MODULES.length) unlockAchievement('all_modules');
+    }
+  };
+
+  const removeXPPop = (id) => setXpPops(p => p.filter(x=>x.id!==id));
+
+  return (
+    <div className="grid-bg" style={{minHeight:'100vh'}}>
+      <NavBar xp={xp} streak={streak} level={level} onHome={()=>setScreen('home')}/>
+
+      {screen === 'home' && (
+        <HomeScreen
+          xp={xp} streak={streak} level={level} completed={completedSet}
+          onModule={id=>{ setActiveModule(id); setScreen('module'); }}
+          onRevision={()=>setScreen('revision')}
+        />
+      )}
+      {screen === 'module' && activeModule && (
+        <ModuleScreen
+          moduleId={activeModule}
+          onBack={()=>setScreen('home')}
+          onComplete={completeModule}
+          onXP={addXP}
+          addXP={addXP}
+        />
+      )}
+      {screen === 'revision' && (
+        <RevisionSheet onBack={()=>setScreen('home')}/>
+      )}
+
+      {/* XP Popups */}
+      {xpPops.map(p => <XPPop key={p.id} amount={p.amount} onDone={()=>removeXPPop(p.id)}/>)}
+
+      {/* Achievement popup */}
+      {showAchievement && (
+        <AchievementPopup achievement={showAchievement} onDone={()=>setShowAchievement(null)}/>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.render(<App/>, document.getElementById('root'));
+</script>
+</body>
+</html>
