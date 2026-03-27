@@ -33,6 +33,7 @@ Open the local Vite URL shown in the terminal to explore the interactive study i
 - [`docs/README.md`](docs/README.md): docs index
 - [`docs/guides/quick-start.md`](docs/guides/quick-start.md): fast setup and first-study path
 - [`docs/guides/study-guide.md`](docs/guides/study-guide.md): multi-week study plan
+- [`docs/guides/exam-prep-checklist.md`](docs/guides/exam-prep-checklist.md): final revision checklist
 - [`docs/reference/glossary.md`](docs/reference/glossary.md): COA terms and definitions
 - [`docs/reference/faq.md`](docs/reference/faq.md): common learner questions
 - [`docs/project/architecture.md`](docs/project/architecture.md): repository layout and technical overview

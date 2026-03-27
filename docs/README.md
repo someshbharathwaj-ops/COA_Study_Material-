@@ -6,6 +6,7 @@ This folder contains the project guides, reference notes, and maintenance docume
 
 - [`guides/quick-start.md`](guides/quick-start.md): setup, first run, and where to begin
 - [`guides/study-guide.md`](guides/study-guide.md): structured learning path and revision plan
+- [`guides/exam-prep-checklist.md`](guides/exam-prep-checklist.md): final revision checklist
 
 ## Reference
 
