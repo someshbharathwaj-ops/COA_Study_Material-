@@ -1,8 +1,12 @@
 node_modules/
+pipeline-site/node_modules/
 dist/
+coverage/
 .env
 .env.local
 .DS_Store
+Thumbs.db
 *.log
 .vscode/
 .idea/
+*.tsbuildinfo
