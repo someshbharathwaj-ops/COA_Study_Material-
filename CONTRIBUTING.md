@@ -1,21 +1,37 @@
 # Contributing to COA Study Material
 
-Thank you for your interest in contributing! This project is designed to help students learn Computer Organization & Architecture through interactive tools and visualizations.
+Thanks for helping improve this repository. The goal is to keep the material accurate, approachable, and easy to maintain for students preparing for Computer Organization and Architecture topics.
 
-## How to Contribute
+## Repository Layout
 
-### Reporting Issues
-- Check existing issues first
-- Provide clear description with screenshots/videos if applicable
-- Include your environment details (browser, OS)
+- `lessons/`: standalone lesson pages
+- `tools/`: standalone study utilities
+- `pipeline-site/`: React/Vite interface
+- `docs/`: learning guides, reference notes, and project documentation
 
-### Adding Content
+## Good Contribution Types
 
-#### New Formulas
-To add new formulas to the Formula Brain tool:
-1. Edit `cao5.jsx` or `pipeline-site/src/Cao5.jsx`
-2. Add to the appropriate topic in the `TOPICS` array
-3. Follow the formula structure:
+- Fix conceptual mistakes in COA explanations
+- Improve worked examples and quiz clarity
+- Add missing formulas, diagrams, or hazard cases
+- Improve accessibility, navigation, and responsiveness
+- Clean up naming, documentation, and repository structure
+
+## Before You Start
+
+1. Read the relevant lesson or guide before editing it.
+2. Prefer focused pull requests over bundled changes.
+3. Keep terminology consistent with the glossary in `docs/reference/glossary.md`.
+4. If you change learning paths or file names, update the README and related docs in the same pull request.
+
+## Adding Formula Content
+
+To update the formula tool:
+
+1. Edit `tools/formula-brain.jsx` or `pipeline-site/src/Cao5.jsx`.
+2. Add entries to the appropriate topic inside the formula dataset.
+3. Follow the existing structure:
+
 ```javascript
 {
   id: "unique-id",
@@ -24,74 +40,51 @@ To add new formulas to the Formula Brain tool:
   formula: "LaTeX or plain text formula",
   meaning: "What it means",
   when: "When to use it",
-  example: "Example usage",
+  example: "Worked example",
   mistake: "Common mistake to avoid"
 }
 ```
 
-#### New Lessons
-1. Create `.html` file for standalone lessons
-2. Include comprehensive explanations with examples
-3. Add to lessons directory
+## Adding Lessons or Study Notes
 
-#### Quiz Questions
-To add questions to `cao5.jsx` QUIZ_QUESTIONS:
-```javascript
-{
-  q: "Question text",
-  formula: "Formula to use",
-  answer: "Worked solution",
-  topic: "topic-id"
-}
-```
+1. Place new lesson pages in `lessons/`.
+2. Use descriptive kebab-case file names.
+3. Keep explanations exam-oriented and example-driven.
+4. Update `README.md`, `docs/README.md`, and any relevant study guides when adding new material.
 
-## Code Style
-
-- Use clear, descriptive variable names
-- Add comments for complex logic
-- Follow existing code patterns
-- Test on multiple screen sizes
-
-## Development Setup
+## Local Development
 
 ```bash
-# Install dependencies
 cd pipeline-site
 npm install
-
-# Run dev server
 npm run dev
-
-# Build for production
-npm run build
 ```
 
-## Pull Request Process
+Use `npm run build` before opening a pull request when the React app is affected.
 
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/description`
-3. Make changes with meaningful commits
-4. Test thoroughly
-5. Submit PR with clear description
+## Content Quality Checklist
 
-## Project Structure to Follow
+- Concepts are technically correct
+- Examples are complete and readable
+- Naming matches the repository structure
+- Links point to the current file paths
+- Screens and layouts still work on mobile and desktop
 
-```
-coa/
-├── standalone lessons (*.html)
-├── standalone tools (*.jsx)
-├── pipeline-site/
-│   ├── React app
-│   ├── Components
-│   └── Styling
-└── Documentation
-```
+## Pull Request Guidance
 
-## Testing
+1. Create a branch with a descriptive name.
+2. Make small, reviewable commits.
+3. Explain what changed and why it helps learners.
+4. Include screenshots for UI changes when possible.
+5. Mention any testing or manual verification you performed.
 
-- Test responsive design (mobile, tablet, desktop)
-- Verify all interactive features work
-- Check formula calculations
-- Test on Chrome, Firefox, Safari
+## Review Standard
 
-Thank you for helping make COA learning accessible to everyone!
+Changes should improve at least one of these:
+
+- conceptual clarity
+- study flow
+- repository maintainability
+- learner confidence
+
+If a contribution adds noise, duplicates existing material, or makes the repo harder to navigate, it should be revised before merge.
