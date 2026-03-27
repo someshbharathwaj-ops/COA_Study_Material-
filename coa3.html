@@ -1,0 +1,1921 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Formula Mastery Weapon System</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@300;400;600&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #020509;
+    --bg2: #050d14;
+    --bg3: #081420;
+    --panel: rgba(8,25,45,0.85);
+    --border: rgba(0,180,255,0.18);
+    --border2: rgba(0,255,200,0.15);
+    --accent: #00b4ff;
+    --accent2: #00ffc8;
+    --accent3: #ff4d8d;
+    --accent4: #ffd700;
+    --text: #c8e8ff;
+    --text2: #7ab8d8;
+    --text3: #3a6a8a;
+    --perf: #00b4ff;
+    --mem: #00ffc8;
+    --pipe: #ff4d8d;
+    --data: #ffd700;
+    --glow: 0 0 30px rgba(0,180,255,0.3);
+    --glow2: 0 0 20px rgba(0,255,200,0.25);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content:'';
+    position:fixed;
+    inset:0;
+    background: radial-gradient(ellipse at 20% 20%, rgba(0,100,200,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 80%, rgba(0,200,150,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0.4) 0%, transparent 100%);
+    pointer-events:none;
+    z-index:0;
+  }
+  /* Grid scan line */
+  body::after {
+    content:'';
+    position:fixed;
+    inset:0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,180,255,0.012) 2px, rgba(0,180,255,0.012) 4px);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  #root { position:relative; z-index:1; }
+
+  /* ---- NAV ---- */
+  nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:16px 40px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(2,5,9,0.9);
+    backdrop-filter: blur(20px);
+    position:sticky; top:0; z-index:100;
+  }
+  .logo {
+    font-family:'Orbitron',sans-serif;
+    font-size:13px; font-weight:900;
+    letter-spacing:3px;
+    color:var(--accent);
+    text-shadow: 0 0 20px rgba(0,180,255,0.6);
+  }
+  .logo span { color:var(--accent2); }
+  nav .tagline { font-size:11px; color:var(--text3); letter-spacing:2px; font-family:'JetBrains Mono',monospace; }
+  .nav-score {
+    display:flex; gap:20px; align-items:center;
+  }
+  .xp-pill {
+    background: linear-gradient(90deg, rgba(0,180,255,0.15), rgba(0,255,200,0.1));
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:4px 14px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--accent2);
+  }
+
+  /* ---- SECTIONS ---- */
+  .page { display:none; }
+  .page.active { display:block; }
+
+  /* ---- HOME ---- */
+  .home-hero {
+    text-align:center;
+    padding:60px 40px 40px;
+  }
+  .home-hero h1 {
+    font-family:'Orbitron',sans-serif;
+    font-size:clamp(24px,4vw,48px);
+    font-weight:900;
+    line-height:1.1;
+    margin-bottom:12px;
+  }
+  .home-hero h1 .line1 { color:var(--text); }
+  .home-hero h1 .line2 {
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    text-shadow:none;
+  }
+  .home-hero p {
+    color:var(--text2);
+    font-size:16px;
+    letter-spacing:1px;
+    margin-bottom:40px;
+  }
+
+  /* Domain cards */
+  .domain-grid {
+    display:grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap:24px;
+    max-width:1100px;
+    margin:0 auto;
+    padding:0 40px 40px;
+  }
+  .domain-card {
+    background: var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:28px;
+    cursor:pointer;
+    transition: all 0.3s ease;
+    position:relative;
+    overflow:hidden;
+    backdrop-filter:blur(20px);
+  }
+  .domain-card::before {
+    content:'';
+    position:absolute; top:0; left:0; right:0; height:3px;
+    border-radius:16px 16px 0 0;
+    transition: opacity 0.3s;
+  }
+  .domain-card:hover {
+    transform:translateY(-4px);
+    box-shadow:var(--glow);
+  }
+  .domain-card:hover::before { opacity:1; }
+  .domain-card.perf::before { background: linear-gradient(90deg,var(--perf),transparent); }
+  .domain-card.mem::before { background: linear-gradient(90deg,var(--mem),transparent); }
+  .domain-card.pipe::before { background: linear-gradient(90deg,var(--pipe),transparent); }
+  .domain-card.data::before { background: linear-gradient(90deg,var(--data),transparent); }
+  .domain-card.perf { border-color:rgba(0,180,255,0.3); }
+  .domain-card.mem { border-color:rgba(0,255,200,0.3); }
+  .domain-card.pipe { border-color:rgba(255,77,141,0.3); }
+  .domain-card.data { border-color:rgba(255,215,0,0.3); }
+  .domain-icon {
+    font-size:32px;
+    margin-bottom:12px;
+  }
+  .domain-card h3 {
+    font-family:'Orbitron',sans-serif;
+    font-size:14px;
+    letter-spacing:2px;
+    margin-bottom:8px;
+  }
+  .domain-card.perf h3 { color:var(--perf); }
+  .domain-card.mem h3 { color:var(--mem); }
+  .domain-card.pipe h3 { color:var(--pipe); }
+  .domain-card.data h3 { color:var(--data); }
+  .domain-card p { font-size:13px; color:var(--text2); margin-bottom:16px; line-height:1.5; }
+  .meta-row {
+    display:flex; gap:12px; margin-bottom:16px;
+  }
+  .meta-pill {
+    font-size:11px;
+    font-family:'JetBrains Mono',monospace;
+    padding:3px 10px;
+    border-radius:20px;
+    border:1px solid var(--border);
+    color:var(--text3);
+  }
+  .mastery-bar-wrap {
+    margin-bottom:8px;
+  }
+  .mastery-label {
+    display:flex; justify-content:space-between;
+    font-size:11px; color:var(--text3);
+    font-family:'JetBrains Mono',monospace;
+    margin-bottom:4px;
+  }
+  .mastery-bar {
+    height:4px;
+    background: rgba(255,255,255,0.06);
+    border-radius:4px;
+    overflow:hidden;
+  }
+  .mastery-fill {
+    height:100%;
+    border-radius:4px;
+    transition: width 1s ease;
+  }
+  .perf .mastery-fill { background: linear-gradient(90deg,var(--perf),rgba(0,180,255,0.4)); }
+  .mem .mastery-fill { background: linear-gradient(90deg,var(--mem),rgba(0,255,200,0.4)); }
+  .pipe .mastery-fill { background: linear-gradient(90deg,var(--pipe),rgba(255,77,141,0.4)); }
+  .data .mastery-fill { background: linear-gradient(90deg,var(--data),rgba(255,215,0,0.4)); }
+
+  /* ---- MODULES BAR ---- */
+  .modules-bar {
+    display:flex; gap:8px; overflow-x:auto;
+    padding:16px 40px;
+    border-bottom:1px solid var(--border);
+    scrollbar-width:none;
+  }
+  .modules-bar::-webkit-scrollbar { display:none; }
+  .mod-btn {
+    flex-shrink:0;
+    background: rgba(8,25,45,0.6);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 18px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    color:var(--text2);
+    cursor:pointer;
+    transition:all 0.2s;
+    white-space:nowrap;
+  }
+  .mod-btn:hover, .mod-btn.active {
+    background:rgba(0,180,255,0.12);
+    border-color:var(--accent);
+    color:var(--accent);
+  }
+
+  /* ---- FORMULA SECTION ---- */
+  .formula-section {
+    max-width:1100px;
+    margin:0 auto;
+    padding:32px 40px;
+  }
+  .section-header {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:28px;
+  }
+  .section-header h2 {
+    font-family:'Orbitron',sans-serif;
+    font-size:18px;
+    letter-spacing:2px;
+  }
+  .back-btn {
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text2);
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    padding:6px 16px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .back-btn:hover { border-color:var(--accent); color:var(--accent); }
+
+  /* Formula Card */
+  .formula-card {
+    background: var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    margin-bottom:24px;
+    overflow:hidden;
+    backdrop-filter:blur(20px);
+    transition:all 0.3s;
+  }
+  .formula-card:hover { box-shadow:var(--glow); }
+  .fc-header {
+    padding:20px 24px 16px;
+    border-bottom:1px solid var(--border);
+    display:flex; align-items:center; gap:16px; cursor:pointer;
+  }
+  .fc-num {
+    font-family:'Orbitron',sans-serif;
+    font-size:11px;
+    color:var(--text3);
+    min-width:32px;
+  }
+  .fc-formula {
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    font-weight:600;
+    flex:1;
+  }
+  .fc-expand {
+    font-size:18px;
+    color:var(--text3);
+    transition:transform 0.3s;
+  }
+  .formula-card.open .fc-expand { transform:rotate(180deg); }
+  .fc-body {
+    display:none;
+    padding:24px;
+    gap:20px;
+  }
+  .formula-card.open .fc-body { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+  @media(max-width:700px) {
+    .formula-card.open .fc-body { grid-template-columns:1fr; }
+  }
+  .fc-block {
+    background:rgba(255,255,255,0.02);
+    border:1px solid var(--border2);
+    border-radius:10px;
+    padding:16px;
+  }
+  .fc-block h4 {
+    font-family:'Orbitron',sans-serif;
+    font-size:10px;
+    letter-spacing:2px;
+    margin-bottom:10px;
+    opacity:0.7;
+  }
+  .fc-block p, .fc-block li {
+    font-size:14px;
+    color:var(--text2);
+    line-height:1.7;
+  }
+  .fc-block ul { padding-left:16px; }
+  .trap-block { border-color:rgba(255,77,141,0.3) !important; }
+  .trap-block h4 { color:var(--accent3) !important; }
+  .trick-block { border-color:rgba(255,215,0,0.2) !important; }
+  .trick-block h4 { color:var(--accent4) !important; }
+
+  /* CALCULATOR */
+  .calc-block {
+    grid-column:1/-1;
+    background:rgba(0,180,255,0.04);
+    border:1px solid rgba(0,180,255,0.2);
+    border-radius:10px;
+    padding:20px;
+  }
+  .calc-block h4 {
+    font-family:'Orbitron',sans-serif;
+    font-size:10px;
+    letter-spacing:2px;
+    color:var(--accent);
+    margin-bottom:16px;
+  }
+  .calc-inputs {
+    display:flex; flex-wrap:wrap; gap:16px; margin-bottom:16px;
+  }
+  .calc-field {
+    display:flex; flex-direction:column; gap:4px; min-width:140px;
+  }
+  .calc-field label {
+    font-size:11px; color:var(--text3);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .calc-field input {
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--border);
+    border-radius:6px;
+    padding:8px 12px;
+    color:var(--text);
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    outline:none;
+    width:140px;
+    transition:border-color 0.2s;
+  }
+  .calc-field input:focus { border-color:var(--accent); }
+  .calc-result {
+    background:rgba(0,180,255,0.1);
+    border:1px solid rgba(0,180,255,0.3);
+    border-radius:8px;
+    padding:12px 20px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:16px;
+    color:var(--accent);
+    display:inline-block;
+    min-width:200px;
+  }
+  .calc-btn {
+    background:rgba(0,180,255,0.15);
+    border:1px solid var(--accent);
+    color:var(--accent);
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    padding:8px 20px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all 0.2s;
+    margin-bottom:12px;
+  }
+  .calc-btn:hover { background:rgba(0,180,255,0.25); }
+
+  /* ---- REFLEX MODE ---- */
+  .reflex-wrap {
+    max-width:700px; margin:40px auto;
+    padding:0 40px;
+    text-align:center;
+  }
+  .reflex-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:48px 40px;
+    backdrop-filter:blur(20px);
+    position:relative;
+    overflow:hidden;
+  }
+  .reflex-card::before {
+    content:'';
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at 50% 0%, rgba(0,180,255,0.08),transparent 60%);
+    pointer-events:none;
+  }
+  .reflex-q {
+    font-family:'Orbitron',sans-serif;
+    font-size:13px;
+    letter-spacing:2px;
+    color:var(--text3);
+    margin-bottom:20px;
+  }
+  .reflex-formula {
+    font-family:'JetBrains Mono',monospace;
+    font-size:clamp(18px,3vw,28px);
+    font-weight:600;
+    color:var(--accent);
+    margin-bottom:24px;
+    min-height:60px;
+    display:flex; align-items:center; justify-content:center;
+    text-shadow:0 0 30px rgba(0,180,255,0.4);
+  }
+  .reflex-hidden { filter:blur(14px); cursor:pointer; }
+  .reflex-controls {
+    display:flex; gap:12px; justify-content:center; flex-wrap:wrap;
+  }
+  .rx-btn {
+    padding:10px 24px;
+    border-radius:8px;
+    font-family:'Orbitron',monospace;
+    font-size:11px;
+    letter-spacing:1px;
+    cursor:pointer;
+    transition:all 0.2s;
+    border:1px solid;
+  }
+  .rx-btn.green { background:rgba(0,255,200,0.1); border-color:var(--accent2); color:var(--accent2); }
+  .rx-btn.red { background:rgba(255,77,141,0.1); border-color:var(--accent3); color:var(--accent3); }
+  .rx-btn.blue { background:rgba(0,180,255,0.1); border-color:var(--accent); color:var(--accent); }
+  .rx-btn:hover { transform:scale(1.05); }
+  .reflex-score {
+    display:flex; gap:24px; justify-content:center; margin-bottom:32px;
+  }
+  .rs-pill {
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    padding:6px 20px;
+    border-radius:20px;
+    border:1px solid var(--border);
+  }
+  .rs-pill.correct { border-color:var(--accent2); color:var(--accent2); }
+  .rs-pill.wrong { border-color:var(--accent3); color:var(--accent3); }
+  .streak-bar {
+    height:6px; background:rgba(255,255,255,0.06); border-radius:6px; overflow:hidden; margin-bottom:24px;
+  }
+  .streak-fill {
+    height:100%;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    border-radius:6px;
+    transition:width 0.4s ease;
+  }
+
+  /* ---- PIPELINE VIZ ---- */
+  .pipeline-wrap {
+    max-width:1000px; margin:0 auto; padding:32px 40px;
+  }
+  .pipeline-stages {
+    display:flex; gap:0; margin-bottom:32px; overflow-x:auto;
+  }
+  .stage-box {
+    flex:1; min-width:100px;
+    text-align:center;
+    padding:20px 8px;
+    position:relative;
+    transition:all 0.3s;
+  }
+  .stage-box::after {
+    content:'▶';
+    position:absolute; right:-10px; top:50%; transform:translateY(-50%);
+    color:var(--text3); font-size:14px; z-index:2;
+  }
+  .stage-box:last-child::after { display:none; }
+  .stage-inner {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:16px 8px;
+    transition:all 0.3s;
+  }
+  .stage-box.active .stage-inner {
+    border-color:var(--accent);
+    background:rgba(0,180,255,0.1);
+    box-shadow:0 0 20px rgba(0,180,255,0.2);
+  }
+  .stage-name {
+    font-family:'Orbitron',sans-serif;
+    font-size:11px;
+    letter-spacing:1px;
+    margin-bottom:8px;
+  }
+  .stage-inst {
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text3);
+    min-height:20px;
+  }
+  .stage-box.active .stage-name { color:var(--accent); }
+  .stage-box.active .stage-inst { color:var(--text); }
+  .pipe-grid {
+    overflow-x:auto;
+  }
+  .pipe-table {
+    border-collapse:collapse;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    width:100%;
+  }
+  .pipe-table th {
+    padding:8px 12px;
+    color:var(--text3);
+    border:1px solid var(--border);
+    background:rgba(0,0,0,0.3);
+    font-weight:400;
+  }
+  .pipe-table td {
+    padding:8px 12px;
+    border:1px solid var(--border);
+    text-align:center;
+  }
+  .pipe-cell { border-radius:4px; padding:4px 8px; font-size:11px; }
+  .pc-if { background:rgba(0,180,255,0.2); color:var(--perf); }
+  .pc-id { background:rgba(0,255,200,0.2); color:var(--mem); }
+  .pc-ex { background:rgba(255,77,141,0.2); color:var(--pipe); }
+  .pc-mem { background:rgba(255,215,0,0.2); color:var(--data); }
+  .pc-wb { background:rgba(150,100,255,0.2); color:#b088ff; }
+
+  /* ---- NUMERICAL GENERATOR ---- */
+  .num-wrap {
+    max-width:800px; margin:0 auto; padding:32px 40px;
+  }
+  .num-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:32px;
+    backdrop-filter:blur(20px);
+    margin-bottom:24px;
+  }
+  .num-q {
+    font-size:16px; color:var(--text); line-height:1.7; margin-bottom:20px;
+  }
+  .num-q strong { color:var(--accent2); }
+  .num-answer-wrap { display:none; }
+  .num-answer-wrap.show { display:block; }
+  .num-answer {
+    background:rgba(0,255,200,0.05);
+    border:1px solid rgba(0,255,200,0.2);
+    border-radius:8px;
+    padding:16px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:14px;
+    color:var(--accent2);
+    margin-top:16px;
+    line-height:1.8;
+  }
+  .diff-btns {
+    display:flex; gap:8px; margin-bottom:20px;
+  }
+  .diff-btn {
+    padding:6px 16px; border-radius:20px; border:1px solid var(--border);
+    font-size:12px; cursor:pointer; transition:all 0.2s;
+    background:transparent; color:var(--text2);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .diff-btn.active { background:rgba(0,180,255,0.15); border-color:var(--accent); color:var(--accent); }
+
+  /* ---- MEMORY HIERARCHY ---- */
+  .memory-wrap {
+    max-width:700px; margin:0 auto; padding:32px 40px;
+  }
+  .pyramid-container {
+    position:relative;
+    text-align:center;
+    margin-bottom:32px;
+  }
+  .pyramid-level {
+    margin:0 auto 4px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:all 0.3s;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 24px;
+    backdrop-filter:blur(10px);
+  }
+  .pyramid-level:hover { filter:brightness(1.3); transform:scale(1.02); }
+  .pyr-label { font-family:'Orbitron',sans-serif; font-size:12px; letter-spacing:1px; }
+  .pyr-stat { font-family:'JetBrains Mono',monospace; font-size:11px; opacity:0.7; }
+  .pyr-l0 { width:100%; background:rgba(255,77,141,0.15); border:1px solid rgba(255,77,141,0.4); }
+  .pyr-l1 { width:82%; background:rgba(255,150,50,0.12); border:1px solid rgba(255,150,50,0.35); }
+  .pyr-l2 { width:64%; background:rgba(255,215,0,0.1); border:1px solid rgba(255,215,0,0.3); }
+  .pyr-l3 { width:46%; background:rgba(0,255,200,0.1); border:1px solid rgba(0,255,200,0.3); }
+  .pyr-l4 { width:28%; background:rgba(0,180,255,0.12); border:1px solid rgba(0,180,255,0.3); }
+  .pyr-l0 .pyr-label { color:#ff4d8d; }
+  .pyr-l1 .pyr-label { color:#ff9632; }
+  .pyr-l2 .pyr-label { color:#ffd700; }
+  .pyr-l3 .pyr-label { color:#00ffc8; }
+  .pyr-l4 .pyr-label { color:#00b4ff; }
+  .mem-formula-panel {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:20px;
+  }
+  .mem-formula-panel h3 {
+    font-family:'Orbitron',sans-serif;
+    font-size:12px;
+    color:var(--accent);
+    letter-spacing:2px;
+    margin-bottom:12px;
+  }
+  .mem-formula-item {
+    display:flex; align-items:center; gap:12px;
+    padding:10px 0;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+  }
+  .mem-formula-item:last-child { border-bottom:none; }
+  .mfi-formula {
+    font-family:'JetBrains Mono',monospace;
+    color:var(--accent2);
+    flex:1;
+  }
+  .mfi-desc { color:var(--text2); font-size:13px; }
+
+  /* ---- REVERSE MODE ---- */
+  .reverse-wrap {
+    max-width:700px; margin:0 auto; padding:32px 40px;
+  }
+  .rev-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:32px;
+    text-align:center;
+    backdrop-filter:blur(20px);
+    margin-bottom:20px;
+  }
+  .rev-result-display {
+    font-family:'JetBrains Mono',monospace;
+    font-size:28px;
+    color:var(--accent4);
+    margin:20px 0;
+    text-shadow:0 0 20px rgba(255,215,0,0.4);
+  }
+  .rev-hint { color:var(--text2); font-size:14px; margin-bottom:24px; }
+  .rev-options {
+    display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  }
+  .rev-opt {
+    background:rgba(255,255,255,0.03);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:14px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    cursor:pointer;
+    transition:all 0.2s;
+    color:var(--text2);
+  }
+  .rev-opt:hover { border-color:var(--accent); color:var(--accent); background:rgba(0,180,255,0.08); }
+  .rev-opt.correct { border-color:var(--accent2); background:rgba(0,255,200,0.1); color:var(--accent2); }
+  .rev-opt.wrong { border-color:var(--accent3); background:rgba(255,77,141,0.1); color:var(--accent3); }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes glow-pulse {
+    0%,100% { box-shadow:0 0 10px rgba(0,180,255,0.2); }
+    50% { box-shadow:0 0 30px rgba(0,180,255,0.5); }
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+  .animate-in { animation:fadeIn 0.4s ease forwards; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .blink { animation:blink 1s infinite; }
+  @keyframes scan {
+    0% { transform:translateY(-100%); }
+    100% { transform:translateY(100vh); }
+  }
+  .scan-line {
+    position:fixed; top:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,transparent,rgba(0,180,255,0.3),transparent);
+    animation:scan 4s linear infinite;
+    pointer-events:none; z-index:999;
+  }
+
+  /* DATAPATH VIZ */
+  .datapath-wrap {
+    max-width:900px; margin:0 auto; padding:32px 40px;
+  }
+  .dp-card {
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:28px;
+    margin-bottom:20px;
+    backdrop-filter:blur(20px);
+  }
+  .dp-card h3 {
+    font-family:'Orbitron',sans-serif;
+    font-size:12px;
+    letter-spacing:2px;
+    color:var(--data);
+    margin-bottom:16px;
+  }
+  .dp-row {
+    display:flex; align-items:center; gap:0;
+    margin-bottom:16px;
+    overflow-x:auto;
+  }
+  .dp-node {
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:10px 16px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    white-space:nowrap;
+    flex-shrink:0;
+    transition:all 0.3s;
+  }
+  .dp-node.active { background:rgba(255,215,0,0.1); border-color:var(--data); color:var(--data); }
+  .dp-arrow {
+    color:var(--text3);
+    font-size:16px;
+    padding:0 8px;
+    flex-shrink:0;
+  }
+  .signal-row {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:12px;
+  }
+  .sig-pill {
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    padding:4px 12px;
+    border-radius:4px;
+    cursor:pointer;
+    transition:all 0.2s;
+  }
+  .sig-pill.off { background:rgba(255,255,255,0.04); border:1px solid var(--border); color:var(--text3); }
+  .sig-pill.on { background:rgba(0,255,200,0.1); border:1px solid var(--accent2); color:var(--accent2); }
+
+  /* responsiveness */
+  @media(max-width:600px) {
+    nav { padding:12px 20px; }
+    .domain-grid { padding:0 20px 20px; }
+    .formula-section, .reflex-wrap, .pipeline-wrap, .num-wrap, .memory-wrap, .reverse-wrap, .datapath-wrap { padding:20px; }
+    .modules-bar { padding:12px 20px; }
+    .rev-options { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="scan-line"></div>
+<div id="root">
+<!-- NAV -->
+<nav>
+  <div>
+    <div class="logo">FORMULA<span>WEAPON</span></div>
+    <div class="tagline">COMPUTER ORGANIZATION · GATE MASTERY SYSTEM</div>
+  </div>
+  <div class="nav-score">
+    <div class="xp-pill" id="xpDisplay">XP: 0</div>
+    <div class="xp-pill" id="streakDisplay">🔥 0</div>
+  </div>
+</nav>
+
+<!-- MODULES BAR -->
+<div class="modules-bar">
+  <button class="mod-btn active" onclick="showModule('home')">⬡ HOME</button>
+  <button class="mod-btn" onclick="showModule('formulas')">📐 FORMULAS</button>
+  <button class="mod-btn" onclick="showModule('reflex')">⚡ REFLEX MODE</button>
+  <button class="mod-btn" onclick="showModule('reverse')">🔁 REVERSE</button>
+  <button class="mod-btn" onclick="showModule('numerical')">🔢 NUMERICALS</button>
+  <button class="mod-btn" onclick="showModule('pipeline')">⚙ PIPELINE VIZ</button>
+  <button class="mod-btn" onclick="showModule('memory')">🧠 MEMORY HIER.</button>
+  <button class="mod-btn" onclick="showModule('datapath')">🔌 DATAPATH</button>
+</div>
+
+<!-- ====== HOME PAGE ====== -->
+<div class="page active" id="page-home">
+  <div class="home-hero">
+    <h1>
+      <div class="line1">FORMULA MASTERY</div>
+      <div class="line2">WEAPON SYSTEM</div>
+    </h1>
+    <p>Computer Organization · Interactive · Reflex Training · GATE AIR Ready</p>
+  </div>
+  <div class="domain-grid">
+    <div class="domain-card perf animate-in" onclick="showDomain('performance')" style="animation-delay:0s">
+      <div class="domain-icon">⚡</div>
+      <h3>PERFORMANCE</h3>
+      <p>Execution time, CPU cycles, CPI, clock rate, throughput & ratio analysis</p>
+      <div class="meta-row">
+        <span class="meta-pill">6 FORMULAS</span>
+        <span class="meta-pill" style="border-color:rgba(0,180,255,0.3);color:#00b4ff">★★★ CORE</span>
+      </div>
+      <div class="mastery-bar-wrap">
+        <div class="mastery-label"><span>MASTERY</span><span id="perf-pct">0%</span></div>
+        <div class="mastery-bar"><div class="mastery-fill" id="perf-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="domain-card mem animate-in" onclick="showDomain('memory')" style="animation-delay:0.08s">
+      <div class="domain-icon">🧠</div>
+      <h3>MEMORY</h3>
+      <p>Hit/miss rates, cache index bits, memory hierarchy access patterns</p>
+      <div class="meta-row">
+        <span class="meta-pill">4 FORMULAS</span>
+        <span class="meta-pill" style="border-color:rgba(0,255,200,0.3);color:#00ffc8">★★ MEDIUM</span>
+      </div>
+      <div class="mastery-bar-wrap">
+        <div class="mastery-label"><span>MASTERY</span><span id="mem-pct">0%</span></div>
+        <div class="mastery-bar"><div class="mastery-fill" id="mem-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="domain-card pipe animate-in" onclick="showDomain('pipelining')" style="animation-delay:0.16s">
+      <div class="domain-icon">🔧</div>
+      <h3>PIPELINING</h3>
+      <p>Stage speedup, instruction throughput vs latency, time per instruction</p>
+      <div class="meta-row">
+        <span class="meta-pill">3 FORMULAS</span>
+        <span class="meta-pill" style="border-color:rgba(255,77,141,0.3);color:#ff4d8d">★★★ TRICKY</span>
+      </div>
+      <div class="mastery-bar-wrap">
+        <div class="mastery-label"><span>MASTERY</span><span id="pipe-pct">0%</span></div>
+        <div class="mastery-bar"><div class="mastery-fill" id="pipe-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+    <div class="domain-card data animate-in" onclick="showDomain('datapath')" style="animation-delay:0.24s">
+      <div class="domain-icon">🔌</div>
+      <h3>DATAPATH</h3>
+      <p>PC update logic, ALU zero, mux control, memory read/write exclusivity</p>
+      <div class="meta-row">
+        <span class="meta-pill">5 RELATIONS</span>
+        <span class="meta-pill" style="border-color:rgba(255,215,0,0.3);color:#ffd700">★★ LOGIC</span>
+      </div>
+      <div class="mastery-bar-wrap">
+        <div class="mastery-label"><span>MASTERY</span><span id="data-pct">0%</span></div>
+        <div class="mastery-bar"><div class="mastery-fill" id="data-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== FORMULAS PAGE ====== -->
+<div class="page" id="page-formulas">
+  <div class="formula-section">
+    <div class="section-header">
+      <h2 id="formula-title" style="color:var(--accent)">ALL FORMULAS</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <div id="formula-list"></div>
+  </div>
+</div>
+
+<!-- ====== REFLEX MODE ====== -->
+<div class="page" id="page-reflex">
+  <div class="reflex-wrap">
+    <div class="section-header" style="padding:0;margin-bottom:24px">
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent3)">⚡ REFLEX MODE</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <div class="reflex-score">
+      <div class="rs-pill correct">✓ <span id="rx-correct">0</span></div>
+      <div class="rs-pill wrong">✗ <span id="rx-wrong">0</span></div>
+    </div>
+    <div class="streak-bar"><div class="streak-fill" id="streak-fill" style="width:0%"></div></div>
+    <div class="reflex-card">
+      <div class="reflex-q" id="rx-q">WHAT IS THE FORMULA FOR:</div>
+      <div id="rx-topic" style="font-family:'Orbitron',sans-serif;font-size:14px;color:var(--accent4);margin-bottom:16px;letter-spacing:1px"></div>
+      <div class="reflex-formula reflex-hidden" id="rx-formula" onclick="revealFormula()">
+        TAP TO REVEAL
+      </div>
+      <div style="font-size:13px;color:var(--text3);margin-bottom:20px" id="rx-hint"></div>
+      <div class="reflex-controls">
+        <button class="rx-btn blue" onclick="revealFormula()">👁 REVEAL</button>
+        <button class="rx-btn green" onclick="markCorrect()">✓ GOT IT</button>
+        <button class="rx-btn red" onclick="markWrong()">✗ MISSED</button>
+        <button class="rx-btn blue" onclick="nextReflex()">→ NEXT</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== REVERSE MODE ====== -->
+<div class="page" id="page-reverse">
+  <div class="reverse-wrap">
+    <div class="section-header" style="padding:0;margin-bottom:24px">
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent4)">🔁 REVERSE THINKING</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <div class="rev-card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3);margin-bottom:8px">GIVEN THIS RESULT:</div>
+      <div class="rev-result-display" id="rev-result">–</div>
+      <div class="rev-hint" id="rev-hint">Which formula produces this?</div>
+      <div class="rev-options" id="rev-options"></div>
+    </div>
+    <div style="text-align:center">
+      <button class="rx-btn blue" onclick="nextReverse()" style="margin-top:8px">→ NEXT QUESTION</button>
+    </div>
+  </div>
+</div>
+
+<!-- ====== NUMERICAL GENERATOR ====== -->
+<div class="page" id="page-numerical">
+  <div class="num-wrap">
+    <div class="section-header" style="padding:0;margin-bottom:24px">
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:2px;color:var(--accent2)">🔢 NUMERICAL GENERATOR</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <div class="diff-btns">
+      <button class="diff-btn active" onclick="setDiff('easy',this)">EASY</button>
+      <button class="diff-btn" onclick="setDiff('medium',this)">MEDIUM</button>
+      <button class="diff-btn" onclick="setDiff('hard',this)">HARD</button>
+    </div>
+    <div class="num-card" id="num-card">
+      <div class="num-q" id="num-q">Press Generate to start</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <button class="calc-btn" onclick="generateNumerical()">⚡ GENERATE</button>
+        <button class="calc-btn" style="border-color:var(--accent2);color:var(--accent2)" onclick="showAnswer()">👁 SHOW ANSWER</button>
+      </div>
+      <div class="num-answer-wrap" id="num-answer-wrap">
+        <div class="num-answer" id="num-answer"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== PIPELINE VIZ ====== -->
+<div class="page" id="page-pipeline">
+  <div class="pipeline-wrap">
+    <div class="section-header" style="padding:0;margin-bottom:24px">
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:2px;color:var(--pipe)">⚙ PIPELINE VISUALIZER</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <!-- Stage animation -->
+    <div class="pipeline-stages" id="pipe-stages">
+      <div class="stage-box" id="st-IF">
+        <div class="stage-inner">
+          <div class="stage-name" style="color:var(--perf)">IF</div>
+          <div class="stage-inst" id="si-IF">—</div>
+        </div>
+      </div>
+      <div class="stage-box" id="st-ID">
+        <div class="stage-inner">
+          <div class="stage-name" style="color:var(--mem)">ID</div>
+          <div class="stage-inst" id="si-ID">—</div>
+        </div>
+      </div>
+      <div class="stage-box" id="st-EX">
+        <div class="stage-inner">
+          <div class="stage-name" style="color:var(--pipe)">EX</div>
+          <div class="stage-inst" id="si-EX">—</div>
+        </div>
+      </div>
+      <div class="stage-box" id="st-MEM">
+        <div class="stage-inner">
+          <div class="stage-name" style="color:var(--data)">MEM</div>
+          <div class="stage-inst" id="si-MEM">—</div>
+        </div>
+      </div>
+      <div class="stage-box" id="st-WB">
+        <div class="stage-inner">
+          <div class="stage-name" style="color:#b088ff">WB</div>
+          <div class="stage-inst" id="si-WB">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- Formula reference -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
+      <div class="dp-card">
+        <h3>SPEEDUP FORMULA</h3>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:18px;color:var(--pipe);margin-bottom:8px">
+          Speedup ≈ N stages
+        </div>
+        <div style="font-size:13px;color:var(--text2)">For <span id="pipe-n">5</span>-stage pipeline → Speedup ≈ <span id="pipe-speedup">5</span>×</div>
+        <input type="range" min="2" max="20" value="5" style="width:100%;margin-top:12px;accent-color:var(--pipe)" oninput="updatePipeCalc(this.value)"/>
+      </div>
+      <div class="dp-card">
+        <h3>TIME PER INSTRUCTION</h3>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--accent2);margin-bottom:8px">
+          T_pipe = T_nonpipe / N
+        </div>
+        <div class="calc-inputs" style="margin-bottom:8px">
+          <div class="calc-field">
+            <label>T_nonpipe (ns)</label>
+            <input type="number" id="tnonpipe" value="20" style="width:120px" oninput="calcTpipe()"/>
+          </div>
+          <div class="calc-field">
+            <label>N (stages)</label>
+            <input type="number" id="tnstages" value="5" style="width:120px" oninput="calcTpipe()"/>
+          </div>
+        </div>
+        <div class="calc-result" id="tpipe-result">T_pipe = 4 ns</div>
+      </div>
+    </div>
+    <!-- Pipeline table -->
+    <div class="dp-card">
+      <h3>PIPELINE EXECUTION TABLE</h3>
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+        5 Instructions × 5 Stages — showing stage overlap
+      </div>
+      <div class="pipe-grid">
+        <table class="pipe-table" id="pipe-table"></table>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="calc-btn" onclick="animatePipeline()">▶ ANIMATE</button>
+        <button class="calc-btn" style="border-color:var(--accent3);color:var(--accent3)" onclick="stopPipeline()">■ STOP</button>
+      </div>
+      <div style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text3)" id="pipe-insight">
+        INSIGHT: Throughput ↑ but single instruction latency stays same (5 cycles)
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MEMORY HIERARCHY ====== -->
+<div class="page" id="page-memory">
+  <div class="memory-wrap">
+    <div class="section-header" style="padding:0;margin-bottom:24px">
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:2px;color:var(--mem)">🧠 MEMORY HIERARCHY</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <div class="pyramid-container">
+      <div class="pyramid-level pyr-l4" onclick="showMemInfo('l1')">
+        <span class="pyr-label">L1 CACHE</span>
+        <span class="pyr-stat">~4 cycles · 32KB</span>
+      </div>
+      <div class="pyramid-level pyr-l3" onclick="showMemInfo('l2')">
+        <span class="pyr-label">L2 CACHE</span>
+        <span class="pyr-stat">~12 cycles · 256KB</span>
+      </div>
+      <div class="pyramid-level pyr-l2" onclick="showMemInfo('l3')">
+        <span class="pyr-label">L3 CACHE</span>
+        <span class="pyr-stat">~40 cycles · 8MB</span>
+      </div>
+      <div class="pyramid-level pyr-l1" onclick="showMemInfo('ram')">
+        <span class="pyr-label">MAIN MEMORY</span>
+        <span class="pyr-stat">~100 cycles · GBs</span>
+      </div>
+      <div class="pyramid-level pyr-l0" onclick="showMemInfo('disk')">
+        <span class="pyr-label">DISK / SSD</span>
+        <span class="pyr-stat">~millions cycles · TBs</span>
+      </div>
+    </div>
+    <div class="mem-formula-panel" id="mem-info-panel">
+      <h3>📐 MEMORY FORMULAS</h3>
+      <div class="mem-formula-item">
+        <div class="mfi-formula">Hit Rate = Hits / Total</div>
+        <div class="mfi-desc">Fraction of accesses found in cache</div>
+      </div>
+      <div class="mem-formula-item">
+        <div class="mfi-formula">Miss Rate = 1 − Hit Rate</div>
+        <div class="mfi-desc">Fraction that must go to lower level</div>
+      </div>
+      <div class="mem-formula-item">
+        <div class="mfi-formula">Index bits = log₂(N_blocks)</div>
+        <div class="mfi-desc">Bits needed to address cache sets</div>
+      </div>
+      <div class="mem-formula-item">
+        <div class="mfi-formula">Miss Rate = Misses / Total</div>
+        <div class="mfi-desc">Direct computation from access log</div>
+      </div>
+    </div>
+    <div class="dp-card" style="margin-top:20px">
+      <h3>CACHE CALCULATOR</h3>
+      <div class="calc-inputs">
+        <div class="calc-field">
+          <label>Total Accesses</label>
+          <input type="number" id="mc-total" value="1000" oninput="calcMem()"/>
+        </div>
+        <div class="calc-field">
+          <label>Cache Hits</label>
+          <input type="number" id="mc-hits" value="850" oninput="calcMem()"/>
+        </div>
+        <div class="calc-field">
+          <label>Cache Blocks (N)</label>
+          <input type="number" id="mc-blocks" value="64" oninput="calcMem()"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <div class="calc-result" id="mc-hitrate">Hit Rate = 0.85</div>
+        <div class="calc-result" id="mc-missrate" style="color:var(--accent3)">Miss Rate = 0.15</div>
+        <div class="calc-result" id="mc-indexbits" style="color:var(--accent4)">Index Bits = 6</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ====== DATAPATH ====== -->
+<div class="page" id="page-datapath">
+  <div class="datapath-wrap">
+    <div class="section-header" style="padding:0;margin-bottom:24px">
+      <h2 style="font-family:'Orbitron',sans-serif;font-size:16px;letter-spacing:2px;color:var(--data)">🔌 DATAPATH SIGNAL SIMULATOR</h2>
+      <button class="back-btn" onclick="showModule('home')">← HOME</button>
+    </div>
+    <!-- PC next -->
+    <div class="dp-card">
+      <h3>PC UPDATE LOGIC</h3>
+      <div class="dp-row">
+        <div class="dp-node active">PC</div>
+        <div class="dp-arrow">+</div>
+        <div class="dp-node active">4</div>
+        <div class="dp-arrow">→</div>
+        <div class="dp-node" id="dp-pcnext">PC_next</div>
+        <div class="dp-arrow">|</div>
+        <div class="dp-node" id="dp-branch">BRANCH?</div>
+        <div class="dp-arrow">→</div>
+        <div class="dp-node" id="dp-target">TARGET</div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--text2);margin-bottom:12px">
+        PC_next = PC + 4 &nbsp;|&nbsp; If Branch AND ALU_Zero → PC = Branch Target
+      </div>
+      <div class="signal-row">
+        <div class="sig-pill off" id="sig-branch" onclick="toggleSignal('branch')">Branch = 0</div>
+        <div class="sig-pill off" id="sig-zero" onclick="toggleSignal('zero')">ALU Zero = 0</div>
+      </div>
+      <div style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent2)" id="dp-result">
+        → PC_next = PC + 4
+      </div>
+    </div>
+    <!-- ALU + MUX -->
+    <div class="dp-card">
+      <h3>ALU CONTROL & MUX SIGNALS</h3>
+      <div class="dp-row">
+        <div class="dp-node">Control Unit</div>
+        <div class="dp-arrow">→</div>
+        <div class="dp-node" id="dp-mux">MUX Select</div>
+        <div class="dp-arrow">→</div>
+        <div class="dp-node" id="dp-alu">ALU Op</div>
+        <div class="dp-arrow">→</div>
+        <div class="dp-node" id="dp-out">Output</div>
+      </div>
+      <div class="signal-row">
+        <div class="sig-pill off" id="sig-regwrite" onclick="toggleSignal('regwrite')">RegWrite = 0</div>
+        <div class="sig-pill off" id="sig-memread" onclick="toggleSignal('memread')">MemRead = 0</div>
+        <div class="sig-pill off" id="sig-memwrite" onclick="toggleSignal('memwrite')">MemWrite = 0</div>
+        <div class="sig-pill off" id="sig-alusrc" onclick="toggleSignal('alusrc')">ALUSrc = 0</div>
+      </div>
+      <div style="margin-top:12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent3)" id="sig-warning"></div>
+      <div style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accent2)" id="dp-op-result">
+        → Idle (no control signals active)
+      </div>
+    </div>
+    <!-- Relation table -->
+    <div class="dp-card">
+      <h3>DATAPATH LOGIC REFERENCE</h3>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px">
+          <tr>
+            <th style="padding:8px 12px;border:1px solid var(--border);color:var(--text3);background:rgba(0,0,0,0.3);text-align:left">RELATION</th>
+            <th style="padding:8px 12px;border:1px solid var(--border);color:var(--text3);background:rgba(0,0,0,0.3);text-align:left">MEANING</th>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--accent2)">PC_next = PC + 4</td>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--text2)">Sequential fetch increments by 4 bytes</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--accent3)">ALU Zero → Branch</td>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--text2)">Zero flag decides if branch is taken</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--data)">Mux Select ← Control</td>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--text2)">Control unit drives all multiplexers</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--accent)">RegWrite = f(ctrl)</td>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--text2)">Register write depends on control signal</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--accent3)">MemRead ⊕ MemWrite</td>
+            <td style="padding:8px 12px;border:1px solid var(--border);color:var(--text2)">Read and Write are mutually exclusive</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end root -->
+
+<script>
+// ====== STATE ======
+let state = JSON.parse(localStorage.getItem('fws-state') || '{}');
+if (!state.xp) state.xp = 0;
+if (!state.streak) state.streak = 0;
+if (!state.correct) state.correct = 0;
+if (!state.wrong) state.wrong = 0;
+if (!state.mastery) state.mastery = {performance:0, memory:0, pipelining:0, datapath:0};
+
+let currentDomain = 'all';
+let rxIndex = 0; let rxShuffled = [];
+let revIndex = 0;
+let numDiff = 'easy';
+let pipeInterval = null;
+let pipeStep = 0;
+let signals = {branch:false, zero:false, regwrite:false, memread:false, memwrite:false, alusrc:false};
+
+// ====== FORMULAS DATA ======
+const formulas = [
+  // PERFORMANCE
+  {id:'p1', domain:'performance', name:'Performance',
+   formula:'Performance = 1 / Execution_Time',
+   meaning:'Performance is the reciprocal of execution time. Faster machine → higher performance.',
+   vars:['Performance: relative speed metric','Execution_Time: actual wall-clock time in seconds'],
+   when:'Comparing two machines. If Machine X takes 5s and Y takes 10s → X is 2× faster',
+   trap:'Performance INCREASES when execution time DECREASES — they are inverse!',
+   trick:'Think: 1 race lap done → performance = 1/time_of_lap',
+   related:['p2','p5'],
+   color:'var(--perf)',
+   calcVars:[{id:'et',label:'Exec Time (s)',default:5}],
+   calcFn: (v)=>`Performance = ${(1/v.et).toFixed(4)}`
+  },
+  {id:'p2', domain:'performance', name:'CPU Time (Clock)',
+   formula:'CPU_Time = Cycles × Clock_Cycle_Time',
+   meaning:'Total CPU time = number of clock cycles multiplied by duration of each cycle.',
+   vars:['Cycles: total clock cycles to run the program','Clock_Cycle_Time: 1/Clock_Rate, in nanoseconds'],
+   when:'When you know total cycles and clock frequency',
+   trap:'Dont confuse Clock_Cycle_Time with Clock_Rate. CycleTime = 1/Rate',
+   trick:'Cycles × Time = Total time. More cycles OR slower clock = worse.',
+   related:['p3','p4'],
+   color:'var(--perf)',
+   calcVars:[{id:'cyc',label:'Cycles',default:1000000},{id:'cct',label:'Cycle Time (ns)',default:2}],
+   calcFn:(v)=>`CPU_Time = ${(v.cyc * v.cct / 1e9).toFixed(6)} s`
+  },
+  {id:'p3', domain:'performance', name:'CPU Time (Full)',
+   formula:'CPU_Time = IC × CPI × Clock_Cycle_Time',
+   meaning:'Expand cycles: IC = instruction count, CPI = cycles per instruction.',
+   vars:['IC: total instructions executed','CPI: average cycles per instruction','Clock_Cycle_Time: 1/f'],
+   when:'Full performance analysis when you know ISA efficiency (CPI) and compiler quality (IC)',
+   trap:'CPI is an AVERAGE. Different instruction types have different CPIs.',
+   trick:'IC × CPI = total cycles → multiply by cycle time = CPU time',
+   related:['p2','p4'],
+   color:'var(--perf)',
+   calcVars:[{id:'ic',label:'IC (M instr)',default:500},{id:'cpi',label:'CPI',default:2},{id:'freq',label:'Clock (GHz)',default:2}],
+   calcFn:(v)=>`CPU_Time = ${(v.ic*1e6 * v.cpi / (v.freq*1e9)).toFixed(4)} s`
+  },
+  {id:'p4', domain:'performance', name:'Clock Rate',
+   formula:'Clock_Rate = 1 / Clock_Cycle_Time',
+   meaning:'Clock rate (frequency) is the inverse of cycle duration.',
+   vars:['Clock_Rate: in Hz, MHz or GHz','Clock_Cycle_Time: in seconds or nanoseconds'],
+   when:'Converting between frequency and period',
+   trap:'1 GHz = 1 ns cycle time. 2 GHz = 0.5 ns. Easy to mix up!',
+   trick:'Rate ↑ means Time ↓. They multiply to 1.',
+   related:['p2','p3'],
+   color:'var(--perf)',
+   calcVars:[{id:'cct2',label:'Cycle Time (ns)',default:1}],
+   calcFn:(v)=>`Clock_Rate = ${(1e9/v.cct2).toFixed(0)} Hz (${(1/v.cct2).toFixed(2)} GHz)`
+  },
+  {id:'p5', domain:'performance', name:'Performance Ratio',
+   formula:'Perf_X / Perf_Y = Exec_Y / Exec_X',
+   meaning:'Performance ratio equals the inverse ratio of execution times.',
+   vars:['Perf_X, Perf_Y: performance of X and Y','Exec_X, Exec_Y: execution times'],
+   when:'Comparing two systems. "X is N times faster than Y"',
+   trap:'Performance ratio uses SWAPPED execution times in numerator/denominator!',
+   trick:'Faster machine has LESS time but MORE performance. Ratio flips.',
+   related:['p1'],
+   color:'var(--perf)',
+   calcVars:[{id:'ex',label:'Exec_X (s)',default:4},{id:'ey',label:'Exec_Y (s)',default:8}],
+   calcFn:(v)=>`Perf_X/Perf_Y = ${(v.ey/v.ex).toFixed(2)}× (X is ${(v.ey/v.ex).toFixed(2)}× faster)`
+  },
+  {id:'p6', domain:'performance', name:'Throughput',
+   formula:'Throughput = Tasks / Time',
+   meaning:'Number of tasks completed per unit time.',
+   vars:['Tasks: number of completed jobs/instructions','Time: wall clock time period'],
+   when:'Measuring system efficiency (jobs/hour, MIPS, FLOPS)',
+   trap:'Throughput and performance are related but NOT the same! Pipelining improves throughput, not latency.',
+   trick:'Think: factory output rate. More tasks per second = higher throughput.',
+   related:['pipe1','pipe3'],
+   color:'var(--perf)',
+   calcVars:[{id:'tasks',label:'Tasks',default:1000},{id:'time',label:'Time (s)',default:10}],
+   calcFn:(v)=>`Throughput = ${(v.tasks/v.time).toFixed(2)} tasks/s`
+  },
+  // MEMORY
+  {id:'m1', domain:'memory', name:'Hit Rate',
+   formula:'Hit_Rate = Hits / Total_Accesses',
+   meaning:'Fraction of memory accesses satisfied by the cache.',
+   vars:['Hits: accesses found in cache','Total_Accesses: all memory requests'],
+   when:'Measuring cache effectiveness',
+   trap:'Hit Rate + Miss Rate = 1 always. If Hit Rate = 0.9, Miss Rate = 0.1, NOT 0.09.',
+   trick:'Good cache → Hit Rate close to 1.0 (99% typical for L1)',
+   related:['m2','m3'],
+   color:'var(--mem)',
+   calcVars:[{id:'hits',label:'Hits',default:950},{id:'total',label:'Total Accesses',default:1000}],
+   calcFn:(v)=>`Hit_Rate = ${(v.hits/v.total).toFixed(4)} (${((v.hits/v.total)*100).toFixed(1)}%)`
+  },
+  {id:'m2', domain:'memory', name:'Miss Rate',
+   formula:'Miss_Rate = Misses / Total_Accesses',
+   meaning:'Fraction of accesses that miss the cache and require lower-level fetch.',
+   vars:['Misses: accesses NOT in cache','Total_Accesses: all requests'],
+   when:'Calculating penalty cost from cache misses',
+   trap:'Miss Rate = 1 − Hit Rate is simpler when you already know Hit Rate',
+   trick:'Lower miss rate = better performance. Even 1% miss can dominate if miss penalty = 100 cycles.',
+   related:['m1','m3'],
+   color:'var(--mem)',
+   calcVars:[{id:'misses',label:'Misses',default:50},{id:'total2',label:'Total Accesses',default:1000}],
+   calcFn:(v)=>`Miss_Rate = ${(v.misses/v.total2).toFixed(4)} (${((v.misses/v.total2)*100).toFixed(1)}%)`
+  },
+  {id:'m3', domain:'memory', name:'Miss Rate (Complement)',
+   formula:'Miss_Rate = 1 − Hit_Rate',
+   meaning:'Miss rate is exactly the complement of hit rate.',
+   vars:['Hit_Rate: already computed fraction'],
+   when:'Quick calculation when hit rate is known',
+   trap:'This ONLY works when Hit Rate and Miss Rate cover all cases (which they always do).',
+   trick:'If someone says 90% hit rate → 10% miss rate. Zero confusion.',
+   related:['m1','m2'],
+   color:'var(--mem)',
+   calcVars:[{id:'hr',label:'Hit Rate (0-1)',default:0.95}],
+   calcFn:(v)=>`Miss_Rate = ${(1-v.hr).toFixed(4)} (${((1-v.hr)*100).toFixed(1)}%)`
+  },
+  {id:'m4', domain:'memory', name:'Cache Index Bits',
+   formula:'Index_bits = log₂(N_cache_blocks)',
+   meaning:'Number of bits in memory address used to index into the cache.',
+   vars:['N_cache_blocks: total number of cache blocks/lines','Index_bits: bits needed to select a block'],
+   when:'Cache design questions: "How many index bits for 64-block cache?"',
+   trap:'log₂(64) = 6, NOT 64. Answer is always in BITS, not blocks.',
+   trick:'64 blocks → 6 bits, 128 → 7 bits, 256 → 8 bits. Power of 2 pattern.',
+   related:['m1','m2'],
+   color:'var(--mem)',
+   calcVars:[{id:'nb',label:'N Blocks',default:64}],
+   calcFn:(v)=>`Index_bits = ${Math.log2(v.nb).toFixed(2)} bits (≈${Math.ceil(Math.log2(v.nb))} bits)`
+  },
+  // PIPELINING
+  {id:'pipe1', domain:'pipelining', name:'Pipeline Speedup',
+   formula:'Speedup ≈ Number_of_Stages',
+   meaning:'Ideal speedup equals number of pipeline stages.',
+   vars:['Number_of_Stages: pipeline depth (e.g., 5 for IF-ID-EX-MEM-WB)'],
+   when:'Theoretical maximum benefit of pipelining',
+   trap:'This is IDEAL. Real speedup < N due to hazards, stalls, flush cycles.',
+   trick:'5-stage MIPS → ideal speedup 5×. Remember: IDEAL, not actual.',
+   related:['pipe2','p6'],
+   color:'var(--pipe)',
+   calcVars:[{id:'ns',label:'N Stages',default:5}],
+   calcFn:(v)=>`Speedup ≈ ${v.ns}× (ideal)`
+  },
+  {id:'pipe2', domain:'pipelining', name:'Time per Instruction (Pipelined)',
+   formula:'T_pipe = T_nonpipe / N_stages',
+   meaning:'Each instruction takes much less time when pipelined (divided equally across stages).',
+   vars:['T_nonpipe: time for single instruction without pipeline','N_stages: number of pipeline stages'],
+   when:'Calculating pipelined instruction time',
+   trap:'This is per-stage cycle time. Latency of one instruction is STILL N_stages cycles!',
+   trick:'20ns instruction / 5 stages = 4ns per stage. But instruction takes 5 × 4ns = 20ns total.',
+   related:['pipe1','pipe3'],
+   color:'var(--pipe)',
+   calcVars:[{id:'tnp',label:'T_nonpipe (ns)',default:20},{id:'ns2',label:'N Stages',default:5}],
+   calcFn:(v)=>`T_pipe = ${(v.tnp/v.ns2).toFixed(2)} ns per stage`
+  },
+  {id:'pipe3', domain:'pipelining', name:'Throughput vs Latency',
+   formula:'Throughput ↑ | Latency = same',
+   meaning:'Pipelining improves the number of instructions completed per cycle (throughput) but does NOT reduce how long a SINGLE instruction takes (latency).',
+   vars:['Throughput: instructions/second (improved)','Latency: time for single instruction (unchanged = N stages)'],
+   when:'Conceptual GATE questions about what pipelining achieves',
+   trap:'CLASSIC TRAP: "Pipelining reduces latency" — FALSE. Latency stays the same!',
+   trick:'Factory analogy: more cars out per hour (throughput) but each car still takes same assembly time (latency)',
+   related:['pipe1','pipe2','p6'],
+   color:'var(--pipe)',
+   calcVars:[{id:'insts',label:'Instructions',default:100},{id:'cycles',label:'Total Cycles',default:104}],
+   calcFn:(v)=>`Throughput ≈ ${(v.insts/v.cycles).toFixed(3)} instr/cycle (latency = N stages)`
+  },
+  // DATAPATH
+  {id:'d1', domain:'datapath', name:'PC Update',
+   formula:'PC_next = PC + 4',
+   meaning:'Program counter increments by 4 bytes for sequential instruction fetch.',
+   vars:['PC: current program counter (byte address)','PC+4: next sequential instruction (32-bit instructions = 4 bytes)'],
+   when:'Sequential execution, no branch, no jump',
+   trap:'It is +4 (bytes) NOT +1. Instructions are 4 bytes = 32 bits in MIPS.',
+   trick:'Address 1000 → next is 1004, then 1008. Always +4.',
+   related:['d2'],
+   color:'var(--data)',
+   calcVars:[{id:'pc',label:'Current PC',default:1000}],
+   calcFn:(v)=>`PC_next = ${v.pc + 4}`
+  },
+  {id:'d2', domain:'datapath', name:'Branch Decision',
+   formula:'Take branch IF: Branch=1 AND ALU_Zero=1',
+   meaning:'A conditional branch is taken only when the branch control signal is active AND ALU result is zero.',
+   vars:['Branch: control signal (1 = branch instruction)','ALU_Zero: flag set when ALU output = 0'],
+   when:'BEQ (branch if equal) instruction execution',
+   trap:'Both conditions MUST be 1. If ALU_Zero=0, branch NOT taken even if Branch=1.',
+   trick:'AND gate logic: Branch AND Zero = take branch. Either 0 → sequential.',
+   related:['d1','d3'],
+   color:'var(--data)',
+   calcVars:[{id:'br',label:'Branch (0/1)',default:1},{id:'az',label:'ALU_Zero (0/1)',default:1}],
+   calcFn:(v)=>`Branch Taken = ${(v.br==1 && v.az==1)?'YES → PC = Target':'NO → PC = PC + 4'}`
+  },
+  {id:'d3', domain:'datapath', name:'MUX Select',
+   formula:'MUX_out = Control_Unit → MUX_select',
+   meaning:'All MUX selectors are driven by the control unit output based on decoded instruction.',
+   vars:['Control_Unit: decodes opcode, sets all control signals','MUX_select: 0 or 1, chooses between two inputs'],
+   when:'Understanding how instruction type determines datapath routing',
+   trap:'MUX selects come from control, NOT from data. Different for each instruction type.',
+   trick:'R-type, I-type, load, store all have different control signal combinations.',
+   related:['d2','d4'],
+   color:'var(--data)',
+   calcVars:[{id:'op',label:'Opcode (0=R,1=I,2=Load,3=Store)',default:0}],
+   calcFn:(v)=>{let ops=['R-type: ALUSrc=0, RegDst=1','I-type: ALUSrc=1, RegDst=0','Load: MemRead=1, MemtoReg=1','Store: MemWrite=1, ALUSrc=1'];return ops[Math.min(v.op,3)]||ops[0];}
+  },
+  {id:'d4', domain:'datapath', name:'Register Write',
+   formula:'Register_Write = f(Control_Signal)',
+   meaning:'Writing to a register only occurs when the RegWrite control signal is asserted.',
+   vars:['RegWrite: 1=write enabled, 0=write disabled','Control_Signal: set by control unit based on instruction'],
+   when:'R-type, I-type (arithmetic), Load instructions write to registers. Store, Branch do NOT.',
+   trap:'Store instruction writes to MEMORY not register. RegWrite = 0 for stores.',
+   trick:'If destination is a register → RegWrite=1. If destination is memory → RegWrite=0.',
+   related:['d3','d5'],
+   color:'var(--data)',
+   calcVars:[{id:'rw',label:'RegWrite (0/1)',default:1}],
+   calcFn:(v)=>`Register Write: ${v.rw==1?'ENABLED — result stored in register file':'DISABLED — no register update'}`
+  },
+  {id:'d5', domain:'datapath', name:'Mem Read/Write Exclusivity',
+   formula:'MemRead XOR MemWrite (mutually exclusive)',
+   meaning:'Memory cannot be read and written simultaneously in a single cycle.',
+   vars:['MemRead: 1 = read from data memory (Load)','MemWrite: 1 = write to data memory (Store)'],
+   when:'Verifying control signal validity. Both 1 is a design error.',
+   trap:'MemRead=1 AND MemWrite=1 simultaneously is ILLEGAL / undefined behavior.',
+   trick:'Load reads memory, Store writes memory. They cannot happen at the same time.',
+   related:['d3','d4'],
+   color:'var(--data)',
+   calcVars:[{id:'mr',label:'MemRead (0/1)',default:1},{id:'mw',label:'MemWrite (0/1)',default:0}],
+   calcFn:(v)=>`${(v.mr==1&&v.mw==1)?'⚠ ERROR: Both=1 is ILLEGAL!':(v.mr==1?'Load: Reading memory':'') || (v.mw==1?'Store: Writing memory':'Idle: No memory access')}`
+  }
+];
+
+// ====== SAVE STATE ======
+function saveState() {
+  localStorage.setItem('fws-state', JSON.stringify(state));
+  document.getElementById('xpDisplay').textContent = `XP: ${state.xp}`;
+  document.getElementById('streakDisplay').textContent = `🔥 ${state.streak}`;
+}
+
+// ====== MODULE NAVIGATION ======
+function showModule(mod) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.mod-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+mod).classList.add('active');
+  event && event.currentTarget && event.currentTarget.classList.add('active');
+  
+  if(mod==='formulas') renderFormulas(currentDomain);
+  if(mod==='reflex') initReflex();
+  if(mod==='reverse') initReverse();
+  if(mod==='pipeline') initPipelineViz();
+  if(mod==='numerical') generateNumerical();
+  if(mod==='memory') calcMem();
+}
+
+function showDomain(domain) {
+  currentDomain = domain;
+  showModule('formulas');
+  const colors = {performance:'var(--perf)',memory:'var(--mem)',pipelining:'var(--pipe)',datapath:'var(--data)'};
+  document.getElementById('formula-title').style.color = colors[domain]||'var(--accent)';
+  document.getElementById('formula-title').textContent = domain.toUpperCase() + ' FORMULAS';
+  // Update mastery
+  updateMastery(domain, Math.min(state.mastery[domain]+10, 100));
+}
+
+// ====== RENDER FORMULAS ======
+function renderFormulas(domain) {
+  const list = document.getElementById('formula-list');
+  const filtered = domain==='all' ? formulas : formulas.filter(f=>f.domain===domain);
+  list.innerHTML = filtered.map((f,i)=>`
+    <div class="formula-card animate-in" id="fc-${f.id}" style="border-top-color:${f.color}; animation-delay:${i*0.05}s">
+      <div class="fc-header" onclick="toggleCard('${f.id}')">
+        <span class="fc-num">${String(i+1).padStart(2,'0')}</span>
+        <span class="fc-formula" style="color:${f.color}">${f.formula}</span>
+        <span class="fc-expand">▼</span>
+      </div>
+      <div class="fc-body" id="fb-${f.id}" style="display:none">
+        <div class="fc-block">
+          <h4>💡 MEANING</h4>
+          <p>${f.meaning}</p>
+        </div>
+        <div class="fc-block">
+          <h4>📊 VARIABLES</h4>
+          <ul>${f.vars.map(v=>`<li>${v}</li>`).join('')}</ul>
+        </div>
+        <div class="fc-block">
+          <h4>🎯 WHEN TO USE</h4>
+          <p>${f.when}</p>
+        </div>
+        <div class="fc-block trap-block">
+          <h4>⚠ EXAM TRAP</h4>
+          <p>${f.trap}</p>
+        </div>
+        <div class="fc-block trick-block">
+          <h4>🧠 MEMORY TRICK</h4>
+          <p>${f.trick}</p>
+        </div>
+        <div class="fc-block">
+          <h4>🔗 RELATED</h4>
+          <p>${f.related.join(', ')}</p>
+        </div>
+        <div class="calc-block">
+          <h4>🧮 INTERACTIVE CALCULATOR</h4>
+          <div class="calc-inputs">
+            ${f.calcVars.map(v=>`
+              <div class="calc-field">
+                <label>${v.label}</label>
+                <input type="number" id="calc-${f.id}-${v.id}" value="${v.default}" oninput="runCalc('${f.id}')"/>
+              </div>
+            `).join('')}
+          </div>
+          <div class="calc-result" id="calcout-${f.id}">—</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+  
+  // Run initial calcs
+  setTimeout(()=>{ filtered.forEach(f=>runCalc(f.id)); }, 100);
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('fc-'+id);
+  const body = document.getElementById('fb-'+id);
+  const isOpen = card.classList.contains('open');
+  card.classList.toggle('open', !isOpen);
+  body.style.display = isOpen ? 'none' : 'grid';
+  if(!isOpen) { state.xp += 5; saveState(); }
+}
+
+function runCalc(fid) {
+  const f = formulas.find(x=>x.id===fid);
+  if(!f) return;
+  try {
+    let vals = {};
+    f.calcVars.forEach(v=>{
+      const el = document.getElementById(`calc-${fid}-${v.id}`);
+      if(el) vals[v.id] = parseFloat(el.value)||0;
+    });
+    const result = f.calcFn(vals);
+    const out = document.getElementById(`calcout-${fid}`);
+    if(out) out.textContent = result;
+  } catch(e){}
+}
+
+// ====== REFLEX MODE ======
+function initReflex() {
+  rxShuffled = [...formulas].sort(()=>Math.random()-0.5);
+  rxIndex = 0;
+  document.getElementById('rx-correct').textContent = state.correct;
+  document.getElementById('rx-wrong').textContent = state.wrong;
+  showReflexCard();
+}
+
+function showReflexCard() {
+  const f = rxShuffled[rxIndex % rxShuffled.length];
+  document.getElementById('rx-topic').textContent = f.name.toUpperCase();
+  document.getElementById('rx-formula').textContent = f.formula;
+  document.getElementById('rx-formula').classList.add('reflex-hidden');
+  document.getElementById('rx-hint').textContent = `Domain: ${f.domain} | Hint: ${f.vars[0]}`;
+}
+
+function revealFormula() {
+  document.getElementById('rx-formula').classList.remove('reflex-hidden');
+}
+
+function markCorrect() {
+  state.correct++; state.streak++; state.xp += 20;
+  rxShuffled[rxIndex % rxShuffled.length].domain && updateMastery(rxShuffled[rxIndex % rxShuffled.length].domain, 5);
+  document.getElementById('rx-correct').textContent = state.correct;
+  document.getElementById('streak-fill').style.width = Math.min(state.streak*10,100)+'%';
+  saveState(); nextReflex();
+}
+
+function markWrong() {
+  state.wrong++; state.streak = 0;
+  document.getElementById('rx-wrong').textContent = state.wrong;
+  document.getElementById('streak-fill').style.width = '0%';
+  saveState(); nextReflex();
+}
+
+function nextReflex() {
+  rxIndex++;
+  showReflexCard();
+}
+
+// ====== REVERSE MODE ======
+function initReverse() { nextReverse(); }
+
+function nextReverse() {
+  const f = formulas[Math.floor(Math.random()*formulas.length)];
+  revIndex = formulas.indexOf(f);
+  
+  // Generate a result hint
+  const hints = {
+    p1:'Performance = 0.25 (Execution time was 4s)',
+    p2:'CPU_Time = 2.0 ms (2M cycles × 1ns)',
+    p3:'CPU_Time = 1.0 s (500M × 2 × 1ns)',
+    p4:'Clock Rate = 2 GHz (cycle time = 0.5ns)',
+    p5:'Machine X is 4× faster than Y',
+    p6:'Throughput = 50 tasks/s',
+    m1:'Hit Rate = 0.95 (950/1000)',
+    m2:'Miss Rate = 0.05 (50/1000)',
+    m3:'Miss Rate = 0.08 (Hit Rate was 0.92)',
+    m4:'Index Bits = 6 (64 cache blocks)',
+    pipe1:'Speedup = 5× (5-stage pipeline)',
+    pipe2:'T_pipe = 4 ns (20ns / 5 stages)',
+    pipe3:'Throughput improved, latency unchanged',
+    d1:'PC_next = 1004 (PC was 1000)',
+    d2:'Branch taken (Branch=1, ALU_Zero=1)',
+    d3:'ALUSrc=1, RegDst=0 (I-type instruction)',
+    d4:'RegWrite=0 (Store instruction)',
+    d5:'MemWrite=1, MemRead=0 (Store)'
+  };
+  
+  document.getElementById('rev-result').textContent = hints[f.id] || f.formula.split('=')[1]||'?';
+  document.getElementById('rev-hint').textContent = 'Which formula/relation produces this result?';
+  
+  // Options: correct + 3 wrong
+  let pool = formulas.filter(x=>x.id!==f.id);
+  let wrongs = pool.sort(()=>Math.random()-0.5).slice(0,3);
+  let options = [f, ...wrongs].sort(()=>Math.random()-0.5);
+  
+  document.getElementById('rev-options').innerHTML = options.map(o=>`
+    <div class="rev-opt" onclick="checkReverse('${o.id}','${f.id}',this)">${o.formula}</div>
+  `).join('');
+}
+
+function checkReverse(chosen, correct, el) {
+  document.querySelectorAll('.rev-opt').forEach(o=>o.style.pointerEvents='none');
+  if(chosen===correct) {
+    el.classList.add('correct');
+    state.xp += 30; state.streak++;
+    saveState();
+  } else {
+    el.classList.add('wrong');
+    // highlight correct
+    document.querySelectorAll('.rev-opt').forEach(o=>{
+      const f = formulas.find(x=>x.formula===o.textContent);
+      if(f && f.id===correct) o.classList.add('correct');
+    });
+    state.streak = 0;
+  }
+}
+
+// ====== NUMERICAL GENERATOR ======
+function setDiff(d, el) {
+  numDiff = d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  generateNumerical();
+}
+
+function generateNumerical() {
+  const problems = {
+    easy: [
+      ()=>{
+        const et=Math.floor(Math.random()*10+1);
+        return {
+          q:`A program runs in <strong>${et}s</strong>. What is its performance?`,
+          a:`Performance = 1 / Execution_Time\n= 1 / ${et}\n= ${(1/et).toFixed(4)} (dimensionless ratio)`
+        };
+      },
+      ()=>{
+        const cycles=Math.floor(Math.random()*900+100)*1000000;
+        const cct=Math.random().toFixed(1)*1+0.5;
+        return {
+          q:`CPU has <strong>${cycles/1e6}M clock cycles</strong> and cycle time <strong>${cct}ns</strong>. Find CPU time.`,
+          a:`CPU_Time = Cycles × Clock_Cycle_Time\n= ${cycles/1e6}×10⁶ × ${cct}×10⁻⁹\n= ${(cycles*cct/1e9).toFixed(4)} seconds`
+        };
+      },
+      ()=>{
+        const hits=Math.floor(Math.random()*200+750);
+        const total=1000;
+        return {
+          q:`Cache has <strong>${hits} hits</strong> out of <strong>${total} accesses</strong>. Find Hit Rate and Miss Rate.`,
+          a:`Hit Rate = ${hits}/${total} = ${(hits/total).toFixed(3)}\nMiss Rate = 1 - ${(hits/total).toFixed(3)} = ${(1-hits/total).toFixed(3)}\n(Or: Miss Rate = ${total-hits}/${total} = ${((total-hits)/total).toFixed(3)})`
+        };
+      }
+    ],
+    medium: [
+      ()=>{
+        const ic=Math.floor(Math.random()*400+200);
+        const cpi=+(Math.random()*2+1).toFixed(1);
+        const freq=+(Math.random()*2+1).toFixed(1);
+        return {
+          q:`Program: IC = <strong>${ic}M</strong>, CPI = <strong>${cpi}</strong>, Clock = <strong>${freq} GHz</strong>. Find CPU Time.`,
+          a:`CPU_Time = IC × CPI × Clock_Cycle_Time\n= ${ic}×10⁶ × ${cpi} × (1/${freq}×10⁹)\n= (${ic}×10⁶ × ${cpi}) / (${freq}×10⁹)\n= ${((ic*1e6*cpi)/(freq*1e9)).toFixed(4)} s`
+        };
+      },
+      ()=>{
+        const nb=[16,32,64,128,256][Math.floor(Math.random()*5)];
+        return {
+          q:`A direct-mapped cache has <strong>${nb} blocks</strong>. How many index bits are needed?`,
+          a:`Index_bits = log₂(N_cache_blocks)\n= log₂(${nb})\n= ${Math.log2(nb)} bits\n(Because 2^${Math.log2(nb)} = ${nb})`
+        };
+      },
+      ()=>{
+        const ex=Math.floor(Math.random()*8+2);
+        const ey=Math.floor(Math.random()*8+2)+ex;
+        return {
+          q:`Machine X: Exec = <strong>${ex}s</strong>, Machine Y: Exec = <strong>${ey}s</strong>.\nHow many times faster is X than Y?`,
+          a:`Perf_X / Perf_Y = Exec_Y / Exec_X\n= ${ey} / ${ex}\n= ${(ey/ex).toFixed(2)}\nX is ${(ey/ex).toFixed(2)}× faster than Y`
+        };
+      }
+    ],
+    hard: [
+      ()=>{
+        const stages=5;
+        const tnp=+(Math.random()*20+10).toFixed(0);
+        const n=+(Math.random()*200+100).toFixed(0);
+        return {
+          q:`Non-pipelined: T = <strong>${tnp}ns/instruction</strong>, 5-stage pipeline.\n(a) Speedup? (b) T_pipe per stage? (c) Time for ${n} instructions (pipelined)?`,
+          a:`(a) Speedup ≈ ${stages}× (ideal)\n(b) T_pipe = ${tnp}/${stages} = ${(tnp/stages).toFixed(1)} ns per stage\n(c) Pipeline time = (N + stages - 1) × T_stage\n= (${n} + ${stages} - 1) × ${(tnp/stages).toFixed(1)}\n= ${(n+stages-1)*(tnp/stages).toFixed(0)} ns\n\nNOTE: Throughput improved but each instruction still takes ${stages} stages.`
+        };
+      },
+      ()=>{
+        const ic1=300, cpi1=1.5, f1=2;
+        const ic2=500, cpi2=1.0, f2=2.5;
+        return {
+          q:`Machine A: IC=<strong>300M</strong>, CPI=<strong>1.5</strong>, Clock=<strong>2GHz</strong>\nMachine B: IC=<strong>500M</strong>, CPI=<strong>1.0</strong>, Clock=<strong>2.5GHz</strong>\nWhich is faster and by how much?`,
+          a:`CPU_A = 300×10⁶ × 1.5 / 2×10⁹ = ${(300e6*1.5/2e9).toFixed(3)}s\nCPU_B = 500×10⁶ × 1.0 / 2.5×10⁹ = ${(500e6*1.0/2.5e9).toFixed(3)}s\n\nA_time = ${(300e6*1.5/2e9).toFixed(3)}s, B_time = ${(500e6/2.5e9).toFixed(3)}s\n${(300e6*1.5/2e9)<(500e6/2.5e9)?'Machine A is faster by':'Machine B is faster by'} ${Math.abs((300e6*1.5/2e9)-(500e6/2.5e9)).toFixed(3)}s\nSpeedup = ${Math.max(300e6*1.5/2e9, 500e6/2.5e9)/Math.min(300e6*1.5/2e9, 500e6/2.5e9).toFixed(2)}×`
+        };
+      }
+    ]
+  };
+  
+  const pool = problems[numDiff];
+  const prob = pool[Math.floor(Math.random()*pool.length)]();
+  document.getElementById('num-q').innerHTML = prob.q;
+  document.getElementById('num-answer').textContent = prob.a;
+  document.getElementById('num-answer-wrap').classList.remove('show');
+  window._currentAnswer = prob.a;
+}
+
+function showAnswer() {
+  document.getElementById('num-answer-wrap').classList.add('show');
+  state.xp += 10; saveState();
+}
+
+// ====== PIPELINE VIZ ======
+function initPipelineViz() {
+  buildPipeTable();
+  updatePipeCalc(5);
+  calcTpipe();
+}
+
+function buildPipeTable() {
+  const stages = ['IF','ID','EX','MEM','WB'];
+  const insts = ['I1','I2','I3','I4','I5'];
+  const colors = ['pc-if','pc-id','pc-ex','pc-mem','pc-wb'];
+  const ncols = 9;
+  
+  let html = '<tr><th>Instr</th>';
+  for(let c=1;c<=ncols;c++) html+=`<th>CC${c}</th>`;
+  html += '</tr>';
+  
+  insts.forEach((inst,i)=>{
+    html += `<tr><td style="color:var(--text2);font-family:'JetBrains Mono',monospace">${inst}</td>`;
+    for(let c=0;c<ncols;c++){
+      const stageIdx = c-i;
+      if(stageIdx>=0 && stageIdx<5){
+        html+=`<td><span class="pipe-cell ${colors[stageIdx]}" id="pc-${i}-${c}">${stages[stageIdx]}</span></td>`;
+      } else {
+        html+=`<td></td>`;
+      }
+    }
+    html+='</tr>';
+  });
+  document.getElementById('pipe-table').innerHTML = html;
+}
+
+function animatePipeline() {
+  stopPipeline();
+  pipeStep = 0;
+  const insts = ['ADD','LW','SUB','BEQ','OR'];
+  const stages = ['IF','ID','EX','MEM','WB'];
+  const stageIds = ['IF','ID','EX','MEM','WB'];
+  
+  pipeInterval = setInterval(()=>{
+    stageIds.forEach(s=>{
+      document.getElementById('st-'+s).classList.remove('active');
+      document.getElementById('si-'+s).textContent='—';
+    });
+    
+    // show current instruction progress
+    const activeSt = pipeStep % 5;
+    document.getElementById('st-'+stageIds[activeSt]).classList.add('active');
+    document.getElementById('si-'+stageIds[activeSt]).textContent = insts[Math.floor(pipeStep/5)%5];
+    
+    pipeStep++;
+    if(pipeStep>=25) stopPipeline();
+  }, 600);
+}
+
+function stopPipeline() {
+  if(pipeInterval) clearInterval(pipeInterval);
+  ['IF','ID','EX','MEM','WB'].forEach(s=>{
+    document.getElementById('st-'+s).classList.remove('active');
+    document.getElementById('si-'+s).textContent='—';
+  });
+}
+
+function updatePipeCalc(v) {
+  document.getElementById('pipe-n').textContent = v;
+  document.getElementById('pipe-speedup').textContent = v;
+}
+
+function calcTpipe() {
+  const tnp = parseFloat(document.getElementById('tnonpipe').value)||1;
+  const n = parseFloat(document.getElementById('tnstages').value)||1;
+  document.getElementById('tpipe-result').textContent = `T_pipe = ${(tnp/n).toFixed(2)} ns`;
+}
+
+// ====== MEMORY CALC ======
+function calcMem() {
+  const total = parseFloat(document.getElementById('mc-total').value)||1;
+  const hits = parseFloat(document.getElementById('mc-hits').value)||0;
+  const blocks = parseFloat(document.getElementById('mc-blocks').value)||1;
+  
+  document.getElementById('mc-hitrate').textContent = `Hit Rate = ${(hits/total).toFixed(4)}`;
+  document.getElementById('mc-missrate').textContent = `Miss Rate = ${(1-hits/total).toFixed(4)}`;
+  document.getElementById('mc-indexbits').textContent = `Index Bits = ${Math.ceil(Math.log2(blocks))}`;
+}
+
+function showMemInfo(level) {
+  const info = {
+    l1:'L1 Cache: Closest to CPU. Fastest. Smallest. Hit rate ~99%. Index bits = log₂(N_blocks).',
+    l2:'L2 Cache: Second level. Larger but slower. Catches L1 misses.',
+    l3:'L3 Cache: Shared among cores. Much larger. Last cache before DRAM.',
+    ram:'Main Memory (DRAM): Large, slow. All cache misses eventually hit here.',
+    disk:'Disk/SSD: Persistent storage. Millions of cycles. Virtual memory maps here.'
+  };
+  const panel = document.getElementById('mem-info-panel');
+  panel.querySelector('h3').textContent = '📐 ' + level.toUpperCase() + ' — ' + (info[level]||'');
+}
+
+// ====== DATAPATH SIGNALS ======
+function toggleSignal(sig) {
+  signals[sig] = !signals[sig];
+  const el = document.getElementById('sig-'+sig);
+  el.classList.toggle('on', signals[sig]);
+  el.classList.toggle('off', !signals[sig]);
+  el.textContent = sig.charAt(0).toUpperCase()+sig.slice(1) + ' = ' + (signals[sig]?'1':'0');
+  
+  updateDPResult();
+}
+
+function updateDPResult() {
+  // PC result
+  const pcTaken = signals.branch && signals.zero;
+  document.getElementById('dp-result').textContent = pcTaken 
+    ? '→ BRANCH TAKEN: PC = Branch Target Address'
+    : '→ PC_next = PC + 4 (sequential)';
+  document.getElementById('dp-pcnext').classList.toggle('active', !pcTaken);
+  document.getElementById('dp-branch').classList.toggle('active', pcTaken);
+  document.getElementById('dp-target').classList.toggle('active', pcTaken);
+  
+  // Operation result
+  const warning = document.getElementById('sig-warning');
+  const result = document.getElementById('dp-op-result');
+  
+  if(signals.memread && signals.memwrite) {
+    warning.textContent = '⚠ ERROR: MemRead=1 AND MemWrite=1 is MUTUALLY EXCLUSIVE and ILLEGAL!';
+    result.textContent = '→ Invalid state';
+  } else {
+    warning.textContent = '';
+    let ops = [];
+    if(signals.regwrite) ops.push('Register Write ENABLED');
+    if(signals.memread) ops.push('Memory READ (Load)');
+    if(signals.memwrite) ops.push('Memory WRITE (Store)');
+    if(signals.alusrc) ops.push('ALU Src = Immediate');
+    result.textContent = '→ ' + (ops.length ? ops.join(' | ') : 'All signals inactive');
+    
+    document.getElementById('dp-mux').classList.toggle('active', signals.alusrc);
+    document.getElementById('dp-alu').classList.toggle('active', signals.regwrite||signals.memread||signals.memwrite);
+    document.getElementById('dp-out').classList.toggle('active', signals.regwrite);
+  }
+}
+
+// ====== MASTERY ======
+function updateMastery(domain, increment) {
+  if(!state.mastery[domain]) state.mastery[domain]=0;
+  state.mastery[domain] = Math.min(state.mastery[domain]+increment, 100);
+  saveState();
+  
+  const barMap = {performance:'perf',memory:'mem',pipelining:'pipe',datapath:'data'};
+  const key = barMap[domain];
+  if(key) {
+    const bar = document.getElementById(key+'-bar');
+    const pct = document.getElementById(key+'-pct');
+    if(bar) bar.style.width = state.mastery[domain]+'%';
+    if(pct) pct.textContent = state.mastery[domain]+'%';
+  }
+}
+
+// ====== INIT ======
+function init() {
+  saveState();
+  // Apply saved mastery
+  const domains = ['performance','memory','pipelining','datapath'];
+  const keys = ['perf','mem','pipe','data'];
+  domains.forEach((d,i)=>{
+    const v = state.mastery[d]||0;
+    const bar = document.getElementById(keys[i]+'-bar');
+    const pct = document.getElementById(keys[i]+'-pct');
+    if(bar) bar.style.width = v+'%';
+    if(pct) pct.textContent = v+'%';
+  });
+}
+
+init();
+</script>
+</body>
+</html>
