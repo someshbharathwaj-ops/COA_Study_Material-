@@ -1,0 +1,2062 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Memory Systems Lab — CPU Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #050810;
+  --bg2: #080d1a;
+  --bg3: #0d1528;
+  --panel: rgba(13,21,40,0.85);
+  --border: rgba(56,189,248,0.15);
+  --border2: rgba(56,189,248,0.35);
+  --cyan: #38bdf8;
+  --cyan2: #0ea5e9;
+  --green: #4ade80;
+  --red: #f87171;
+  --orange: #fb923c;
+  --yellow: #facc15;
+  --purple: #a78bfa;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --hit: #4ade80;
+  --miss: #f87171;
+  --glow: 0 0 20px rgba(56,189,248,0.3);
+  --glow2: 0 0 40px rgba(56,189,248,0.15);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Syne', sans-serif;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ── GRID BACKGROUND ── */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(56,189,248,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── NAV ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:100;
+  background: rgba(5,8,16,0.9);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 2rem;
+  height: 60px;
+  display: flex; align-items: center; gap: 0.5rem;
+  overflow-x: auto;
+}
+nav a {
+  color: var(--text3);
+  text-decoration: none;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 0.35rem 0.75rem;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+nav a:hover { color: var(--cyan); border-color: var(--border); }
+nav a.active { color: var(--cyan); border-color: var(--cyan); background: rgba(56,189,248,0.08); }
+.nav-brand {
+  font-family: 'Space Mono', monospace;
+  font-size: 0.85rem;
+  color: var(--cyan);
+  font-weight:700;
+  margin-right: 1.5rem;
+  white-space: nowrap;
+}
+
+/* ── MAIN ── */
+main { padding-top: 60px; position: relative; z-index: 1; }
+
+/* ── SECTIONS ── */
+section {
+  min-height: 100vh;
+  padding: 5rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ── HERO ── */
+#hero {
+  min-height: calc(100vh - 60px);
+  display: flex; flex-direction:column;
+  justify-content: center; align-items:center;
+  text-align: center;
+  position: relative;
+  max-width: 100%;
+  padding: 4rem 2rem;
+}
+.hero-label {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.75rem; color:var(--cyan);
+  letter-spacing:0.2em;
+  border: 1px solid var(--border2);
+  padding: 0.3rem 1rem;
+  border-radius: 20px;
+  margin-bottom: 2rem;
+  display:inline-block;
+  animation: pulse-border 2s ease-in-out infinite;
+}
+@keyframes pulse-border {
+  0%,100%{border-color:rgba(56,189,248,0.3);}
+  50%{border-color:rgba(56,189,248,0.8);}
+}
+.hero-title {
+  font-size: clamp(3rem,8vw,7rem);
+  font-weight:800;
+  line-height:1;
+  margin-bottom:1.5rem;
+  background: linear-gradient(135deg, #fff 0%, var(--cyan) 50%, var(--purple) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.hero-sub {
+  font-size: 1.1rem; color:var(--text2);
+  max-width: 600px;
+  line-height: 1.7;
+  margin-bottom: 3rem;
+  font-weight:400;
+}
+.hero-cta {
+  display: flex; gap:1rem; flex-wrap:wrap; justify-content:center;
+}
+.btn {
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-family:'Syne',sans-serif;
+  font-weight:700;
+  font-size:0.9rem;
+  transition: all 0.2s;
+  text-decoration:none;
+  display:inline-flex; align-items:center; gap:0.5rem;
+}
+.btn-primary {
+  background: var(--cyan);
+  color: var(--bg);
+  box-shadow: 0 0 30px rgba(56,189,248,0.4);
+}
+.btn-primary:hover { box-shadow: 0 0 50px rgba(56,189,248,0.7); transform:translateY(-2px); }
+.btn-outline {
+  background: transparent;
+  color: var(--cyan);
+  border: 1px solid var(--border2);
+}
+.btn-outline:hover { background:rgba(56,189,248,0.08); }
+
+/* ── XP BAR ── */
+.xp-bar {
+  position:fixed; bottom:0; left:0; right:0; z-index:100;
+  background: rgba(5,8,16,0.95);
+  border-top:1px solid var(--border);
+  padding: 0.5rem 2rem;
+  display:flex; align-items:center; gap:1rem;
+}
+.xp-label { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--cyan); white-space:nowrap; }
+.xp-track { flex:1; height:6px; background:rgba(56,189,248,0.1); border-radius:3px; }
+.xp-fill { height:100%; background: linear-gradient(90deg, var(--cyan), var(--purple)); border-radius:3px; transition: width 0.5s ease; width:0%; }
+.xp-rank { font-family:'Space Mono',monospace; font-size:0.7rem; color:var(--yellow); white-space:nowrap; }
+.xp-points { font-family:'JetBrains Mono',monospace; font-size:0.7rem; color:var(--text2); white-space:nowrap; }
+
+/* ── SECTION HEADERS ── */
+.section-header {
+  margin-bottom:3rem;
+}
+.section-tag {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.7rem; color:var(--cyan);
+  letter-spacing:0.15em;
+  margin-bottom:0.5rem;
+}
+.section-title {
+  font-size: clamp(2rem,4vw,3.5rem);
+  font-weight:800;
+  line-height:1.1;
+}
+.section-desc {
+  color:var(--text2); font-size:1rem;
+  max-width:600px; line-height:1.7;
+  margin-top:0.75rem;
+}
+
+/* ── CARD / PANEL ── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+}
+.card:hover { border-color: var(--border2); }
+
+/* ── GRID LAYOUTS ── */
+.grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+.grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:1.5rem; }
+@media(max-width:768px) {
+  .grid-2,.grid-3 { grid-template-columns:1fr; }
+}
+
+/* ── ANALOGY CARD ── */
+.analogy-card {
+  background: linear-gradient(135deg, rgba(13,21,40,0.9) 0%, rgba(20,30,60,0.9) 100%);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  position:relative; overflow:hidden;
+  margin-bottom: 2rem;
+}
+.analogy-card::before {
+  content:'';
+  position:absolute; top:-50%; right:-20%;
+  width:300px; height:300px;
+  background: radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%);
+  pointer-events:none;
+}
+.chef-scene {
+  display:flex; gap:2rem; align-items:center; flex-wrap:wrap;
+}
+.chef-icon { font-size:5rem; animation: bob 2s ease-in-out infinite; }
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+/* ── LOCALITY ANIMATION ── */
+.locality-viz {
+  display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;
+}
+.memory-tape {
+  display:flex; flex-direction:column; gap:3px;
+}
+.tape-cell {
+  height:28px; border-radius:4px;
+  background: rgba(56,189,248,0.06);
+  border: 1px solid var(--border);
+  display:flex; align-items:center; padding:0 0.75rem;
+  font-family:'JetBrains Mono',monospace; font-size:0.7rem;
+  color:var(--text3); transition: all 0.3s;
+}
+.tape-cell.active-temporal {
+  background: rgba(74,222,128,0.15);
+  border-color: var(--green);
+  color:var(--green);
+  box-shadow: 0 0 10px rgba(74,222,128,0.2);
+}
+.tape-cell.active-spatial {
+  background: rgba(56,189,248,0.15);
+  border-color: var(--cyan);
+  color:var(--cyan);
+  box-shadow: 0 0 10px rgba(56,189,248,0.2);
+}
+
+/* ── HIERARCHY PYRAMID ── */
+.pyramid-container {
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding: 2rem 0;
+}
+.pyramid-level {
+  display:flex; align-items:center; justify-content:space-between;
+  border-radius: 8px; cursor:pointer;
+  transition: all 0.3s;
+  position:relative;
+  border: 1px solid transparent;
+}
+.pyramid-level:hover { transform:scale(1.02); }
+.pyramid-level .level-label {
+  font-family:'Space Mono',monospace; font-size:0.75rem; font-weight:700;
+  padding:0 1rem;
+}
+.pyramid-level .level-meta {
+  font-family:'JetBrains Mono',monospace; font-size:0.65rem;
+  color:var(--text3); padding:0 1rem; text-align:right;
+}
+.level-info-popup {
+  display:none; position:absolute; left:105%; top:0; z-index:10;
+  background:var(--bg3); border:1px solid var(--border2);
+  border-radius:12px; padding:1rem; width:220px;
+  font-size:0.8rem; line-height:1.6;
+}
+.pyramid-level:hover .level-info-popup { display:block; }
+
+/* ── MEMORY TECH COMPARISON ── */
+.tech-bar-container { margin:1rem 0; }
+.tech-bar-label {
+  display:flex; justify-content:space-between;
+  font-family:'JetBrains Mono',monospace; font-size:0.7rem;
+  margin-bottom:0.4rem; color:var(--text2);
+}
+.tech-bar-track { height:8px; background:rgba(255,255,255,0.05); border-radius:4px; overflow:hidden; }
+.tech-bar-fill { height:100%; border-radius:4px; transition: width 1s ease; }
+
+/* ── CACHE SIMULATOR ── */
+.cache-sim-layout {
+  display:grid; grid-template-columns:1fr 280px; gap:1.5rem;
+}
+@media(max-width:900px){.cache-sim-layout{grid-template-columns:1fr;}}
+.cache-table {
+  width:100%; border-collapse:collapse;
+  font-family:'JetBrains Mono',monospace; font-size:0.8rem;
+}
+.cache-table th {
+  background:rgba(56,189,248,0.1); color:var(--cyan);
+  padding:0.5rem 0.75rem; text-align:left;
+  border-bottom:1px solid var(--border2); font-size:0.7rem; letter-spacing:0.1em;
+}
+.cache-table td {
+  padding:0.45rem 0.75rem; border-bottom:1px solid var(--border);
+  color:var(--text2); transition:all 0.4s;
+}
+.cache-table tr.highlighted td { background:rgba(56,189,248,0.08); color:var(--text); }
+.cache-table tr.hit-row td { background:rgba(74,222,128,0.1); color:var(--green); }
+.cache-table tr.miss-row td { background:rgba(248,113,113,0.1); color:var(--red); }
+.cache-table tr.active-row td { background:rgba(56,189,248,0.15); color:var(--cyan); }
+
+.ref-queue { display:flex; flex-direction:column; gap:0.4rem; }
+.ref-item {
+  padding:0.4rem 0.75rem; border-radius:6px;
+  font-family:'JetBrains Mono',monospace; font-size:0.75rem;
+  border:1px solid var(--border);
+  display:flex; justify-content:space-between; align-items:center;
+  transition:all 0.3s;
+}
+.ref-item.pending { color:var(--text3); }
+.ref-item.current { color:var(--cyan); border-color:var(--cyan); background:rgba(56,189,248,0.08); }
+.ref-item.hit-done { color:var(--green); border-color:rgba(74,222,128,0.3); }
+.ref-item.miss-done { color:var(--red); border-color:rgba(248,113,113,0.3); }
+.badge {
+  font-size:0.6rem; padding:0.15rem 0.4rem; border-radius:3px;
+  font-weight:700; letter-spacing:0.05em;
+}
+.badge-hit { background:rgba(74,222,128,0.2); color:var(--green); }
+.badge-miss { background:rgba(248,113,113,0.2); color:var(--red); }
+
+/* ── ADDRESS BREAKDOWN ── */
+.addr-display {
+  font-family:'Space Mono',monospace;
+  font-size:clamp(1.2rem,3vw,2rem);
+  letter-spacing:0.15em;
+  margin: 1.5rem 0;
+  display:flex; gap:0; flex-wrap:wrap; justify-content:center;
+}
+.addr-bit {
+  width:36px; height:44px;
+  display:flex; align-items:center; justify-content:center;
+  border: 1px solid var(--border);
+  margin:1px; border-radius:4px;
+  font-size:1.1rem; font-weight:700;
+  transition: all 0.4s;
+  cursor:default;
+  position:relative;
+}
+.addr-bit.tag-bit { background:rgba(167,139,250,0.15); border-color:var(--purple); color:var(--purple); }
+.addr-bit.index-bit { background:rgba(56,189,248,0.15); border-color:var(--cyan); color:var(--cyan); }
+.addr-bit.offset-bit { background:rgba(251,146,60,0.15); border-color:var(--orange); color:var(--orange); }
+.addr-legend {
+  display:flex; gap:1.5rem; justify-content:center; margin-top:1rem; flex-wrap:wrap;
+}
+.legend-item {
+  display:flex; align-items:center; gap:0.5rem;
+  font-family:'JetBrains Mono',monospace; font-size:0.75rem;
+}
+.legend-dot { width:12px; height:12px; border-radius:2px; }
+
+/* ── FORMULA ENGINE ── */
+.formula-engine {
+  display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;
+}
+@media(max-width:768px){.formula-engine{grid-template-columns:1fr;}}
+.input-group { margin-bottom:1rem; }
+.input-label {
+  font-family:'JetBrains Mono',monospace; font-size:0.72rem;
+  color:var(--text2); margin-bottom:0.4rem; display:block;
+}
+.styled-input {
+  width:100%; padding:0.6rem 0.9rem;
+  background: rgba(56,189,248,0.05);
+  border: 1px solid var(--border);
+  border-radius:8px; color:var(--text);
+  font-family:'JetBrains Mono',monospace; font-size:0.9rem;
+  transition: border-color 0.2s;
+  outline:none;
+}
+.styled-input:focus { border-color:var(--cyan); box-shadow: 0 0 0 3px rgba(56,189,248,0.1); }
+.result-box {
+  background: rgba(56,189,248,0.05);
+  border: 1px solid var(--border2);
+  border-radius:12px; padding:1.25rem;
+  margin-top:0.5rem;
+}
+.result-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:0.4rem 0; border-bottom:1px solid var(--border);
+}
+.result-row:last-child { border-bottom:none; }
+.result-key { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--text3); }
+.result-val {
+  font-family:'Space Mono',monospace; font-size:0.9rem;
+  color:var(--cyan); font-weight:700;
+}
+
+/* ── CPI CALC ── */
+.cpi-display {
+  text-align:center; padding:1.5rem;
+  background: linear-gradient(135deg,rgba(167,139,250,0.08),rgba(56,189,248,0.08));
+  border:1px solid var(--border); border-radius:12px;
+}
+.cpi-number {
+  font-family:'Space Mono',monospace;
+  font-size:3rem; font-weight:700;
+  color:var(--yellow);
+}
+
+/* ── ASSOCIATIVITY SIM ── */
+.assoc-tabs {
+  display:flex; gap:0.5rem; margin-bottom:1.5rem; flex-wrap:wrap;
+}
+.assoc-tab {
+  padding:0.4rem 1rem; border-radius:6px;
+  font-family:'JetBrains Mono',monospace; font-size:0.75rem;
+  border:1px solid var(--border); background:transparent;
+  color:var(--text3); cursor:pointer; transition:all 0.2s;
+}
+.assoc-tab.active { background:rgba(56,189,248,0.1); border-color:var(--cyan); color:var(--cyan); }
+.assoc-grid { display:flex; gap:1rem; flex-wrap:wrap; }
+.assoc-set {
+  display:flex; flex-direction:column; gap:3px;
+  border:1px solid var(--border); border-radius:8px; padding:0.75rem;
+  min-width:110px;
+}
+.assoc-set-label {
+  font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--text3); margin-bottom:4px;
+}
+.assoc-block {
+  height:30px; border-radius:4px;
+  border:1px solid var(--border);
+  background:rgba(56,189,248,0.04);
+  display:flex; align-items:center; padding:0 0.6rem;
+  font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--text3);
+  transition:all 0.3s;
+}
+.assoc-block.filled { background:rgba(56,189,248,0.12); border-color:var(--cyan); color:var(--cyan); }
+.assoc-block.hit-block { background:rgba(74,222,128,0.15); border-color:var(--green); color:var(--green); }
+.assoc-block.miss-block { background:rgba(248,113,113,0.12); border-color:var(--red); color:var(--red); }
+
+/* ── LRU VIZ ── */
+.lru-queue {
+  display:flex; gap:0.5rem; flex-wrap:wrap; margin:1rem 0;
+  align-items:center;
+}
+.lru-block {
+  width:70px; height:50px; border-radius:8px;
+  border:1px solid var(--border);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:0.85rem; font-weight:700;
+  transition:all 0.4s; position:relative;
+}
+.lru-block .lru-age {
+  font-family:'JetBrains Mono',monospace; font-size:0.55rem;
+  color:var(--text3); margin-top:2px;
+}
+.lru-arrow { color:var(--text3); font-size:1.5rem; }
+.lru-block.lru-victim { border-color:var(--red); background:rgba(248,113,113,0.15); color:var(--red); }
+.lru-block.lru-newest { border-color:var(--green); background:rgba(74,222,128,0.15); color:var(--green); }
+.lru-block.lru-mid { border-color:var(--border2); color:var(--cyan); }
+
+/* ── WRITE POLICY ── */
+.write-compare {
+  display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;
+}
+@media(max-width:600px){.write-compare{grid-template-columns:1fr;}}
+.write-card {
+  border-radius:14px; padding:1.5rem;
+  border:1px solid var(--border);
+}
+.write-card.through { border-color:rgba(56,189,248,0.35); }
+.write-card.back { border-color:rgba(167,139,250,0.35); }
+
+/* ── QUIZ ── */
+.quiz-card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:20px; padding:2rem;
+}
+.quiz-q { font-size:1.1rem; font-weight:600; margin-bottom:1.5rem; line-height:1.5; }
+.quiz-options { display:flex; flex-direction:column; gap:0.75rem; }
+.quiz-option {
+  padding:0.9rem 1.2rem; border-radius:10px;
+  border:1px solid var(--border);
+  background:rgba(56,189,248,0.03);
+  cursor:pointer; font-size:0.9rem;
+  transition:all 0.2s; text-align:left; color:var(--text);
+  font-family:'Syne',sans-serif;
+}
+.quiz-option:hover { border-color:var(--border2); background:rgba(56,189,248,0.06); }
+.quiz-option.correct { border-color:var(--green); background:rgba(74,222,128,0.12); color:var(--green); }
+.quiz-option.wrong { border-color:var(--red); background:rgba(248,113,113,0.12); color:var(--red); }
+.quiz-option.reveal { border-color:var(--green); background:rgba(74,222,128,0.08); }
+.quiz-explain {
+  margin-top:1rem; padding:1rem; border-radius:8px;
+  background:rgba(56,189,248,0.06); border:1px solid var(--border);
+  font-size:0.85rem; line-height:1.7; color:var(--text2);
+  display:none;
+}
+.quiz-score {
+  display:flex; gap:2rem; margin-bottom:1.5rem; flex-wrap:wrap;
+}
+.score-item {
+  text-align:center;
+}
+.score-num {
+  font-family:'Space Mono',monospace; font-size:1.8rem; font-weight:700;
+}
+.score-label { font-size:0.72rem; color:var(--text3); font-family:'JetBrains Mono',monospace; }
+
+/* ── MULTILEVEL ── */
+.multilevel-viz {
+  display:flex; flex-direction:column; align-items:center; gap:0;
+}
+.ml-level {
+  display:flex; align-items:center; gap:1rem;
+  padding:0.75rem 1.5rem; border-radius:8px;
+  border:1px solid var(--border); margin:2px 0;
+  transition:all 0.3s;
+  width:80%; justify-content:space-between;
+}
+.ml-level.active { border-color:var(--cyan); background:rgba(56,189,248,0.08); }
+.ml-level.hit-level { border-color:var(--green); background:rgba(74,222,128,0.08); }
+.ml-level.miss-level { border-color:var(--red); background:rgba(248,113,113,0.06); }
+.ml-name { font-family:'Space Mono',monospace; font-size:0.8rem; font-weight:700; }
+.ml-stats { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--text3); }
+.ml-arrow { color:var(--text3); font-size:1.2rem; }
+.connector-line {
+  width:2px; height:20px; background:linear-gradient(to bottom, var(--border), transparent);
+  margin:0 auto;
+}
+
+/* ── AMAT VISUAL ── */
+.amat-timeline {
+  display:flex; align-items:center; gap:0; margin:1.5rem 0;
+  font-family:'JetBrains Mono',monospace; font-size:0.72rem;
+  overflow-x:auto; padding-bottom:0.5rem;
+}
+.amat-segment {
+  height:40px; display:flex; align-items:center; justify-content:center;
+  border-radius:4px; margin:1px; white-space:nowrap; padding:0 0.75rem;
+  font-weight:600; min-width:60px;
+}
+.amat-hit { background:rgba(74,222,128,0.2); border:1px solid var(--green); color:var(--green); }
+.amat-miss { background:rgba(248,113,113,0.2); border:1px solid var(--red); color:var(--red); }
+.amat-eq { padding:0 0.75rem; color:var(--text3); font-size:1rem; }
+
+/* ── STAT CARD ── */
+.stat-card {
+  text-align:center; padding:1.5rem;
+  border-radius:12px; border:1px solid var(--border);
+  background:var(--panel);
+}
+.stat-num {
+  font-family:'Space Mono',monospace;
+  font-size:2.5rem; font-weight:700;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+}
+.stat-label { font-size:0.8rem; color:var(--text3); margin-top:0.25rem; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeInUp { from{opacity:0;transform:translateY(30px)} to{opacity:1;transform:translateY(0)} }
+@keyframes glowPulse { 0%,100%{opacity:0.6} 50%{opacity:1} }
+@keyframes slideIn { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+
+.fade-in-up { animation: fadeInUp 0.6s ease forwards; }
+.fade-in-delay-1 { animation-delay:0.1s; opacity:0; }
+.fade-in-delay-2 { animation-delay:0.2s; opacity:0; }
+.fade-in-delay-3 { animation-delay:0.3s; opacity:0; }
+
+/* ── NOTIFICATION ── */
+.notification {
+  position:fixed; top:80px; right:2rem; z-index:200;
+  padding:0.75rem 1.5rem; border-radius:10px;
+  font-family:'JetBrains Mono',monospace; font-size:0.8rem;
+  transform:translateX(120%); transition:transform 0.4s;
+  pointer-events:none;
+}
+.notification.show { transform:translateX(0); }
+.notification.hit-notif { background:rgba(74,222,128,0.2); border:1px solid var(--green); color:var(--green); }
+.notification.miss-notif { background:rgba(248,113,113,0.2); border:1px solid var(--red); color:var(--red); }
+.notification.xp-notif { background:rgba(250,204,21,0.15); border:1px solid var(--yellow); color:var(--yellow); }
+
+/* ── DIVIDER ── */
+.section-divider {
+  width:100%; height:1px;
+  background:linear-gradient(90deg,transparent,var(--border2),transparent);
+  margin:1rem 0;
+}
+
+/* ── CODE BLOCK ── */
+.code-block {
+  background:rgba(0,0,0,0.4); border:1px solid var(--border);
+  border-radius:8px; padding:1.25rem;
+  font-family:'JetBrains Mono',monospace; font-size:0.8rem;
+  line-height:1.8; overflow-x:auto;
+}
+.code-comment { color:var(--text3); }
+.code-keyword { color:var(--purple); }
+.code-value { color:var(--yellow); }
+.code-result { color:var(--cyan); }
+
+/* ── HIGHLIGHT ── */
+.highlight { color:var(--cyan); }
+.highlight-green { color:var(--green); }
+.highlight-red { color:var(--red); }
+.highlight-yellow { color:var(--yellow); }
+.highlight-purple { color:var(--purple); }
+
+/* ── SKILL TREE ── */
+.skill-tree {
+  display:flex; flex-direction:column; gap:0.5rem; margin-top:1rem;
+}
+.skill-node {
+  display:flex; align-items:center; gap:1rem;
+  padding:0.75rem 1rem; border-radius:8px;
+  border:1px solid var(--border); background:rgba(56,189,248,0.02);
+  transition:all 0.3s;
+}
+.skill-node.unlocked { border-color:rgba(74,222,128,0.35); background:rgba(74,222,128,0.05); }
+.skill-node.current { border-color:var(--cyan); background:rgba(56,189,248,0.08); animation:pulse-border 2s infinite; }
+.skill-icon { font-size:1.5rem; width:40px; text-align:center; }
+.skill-info { flex:1; }
+.skill-name { font-size:0.9rem; font-weight:600; }
+.skill-xp-req { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--text3); }
+.skill-status { font-family:'JetBrains Mono',monospace; font-size:0.7rem; }
+
+/* ── STEP COUNTER ── */
+.step-indicator {
+  display:flex; align-items:center; gap:0; margin:1.5rem 0;
+}
+.step-dot {
+  width:32px; height:32px; border-radius:50%;
+  border:2px solid var(--border);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'Space Mono',monospace; font-size:0.75rem;
+  transition:all 0.3s; background:var(--bg);
+}
+.step-dot.done { border-color:var(--green); background:rgba(74,222,128,0.15); color:var(--green); }
+.step-dot.active { border-color:var(--cyan); background:rgba(56,189,248,0.15); color:var(--cyan); box-shadow:0 0 10px rgba(56,189,248,0.3); }
+.step-line { flex:1; height:2px; background:var(--border); }
+.step-line.done { background:var(--green); }
+
+/* scrollbar */
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <span class="nav-brand">⚡ MEM_LAB</span>
+  <a href="#hero" class="active">Home</a>
+  <a href="#locality">Locality</a>
+  <a href="#hierarchy">Hierarchy</a>
+  <a href="#technologies">Tech</a>
+  <a href="#cache-basics">Cache</a>
+  <a href="#address">Address</a>
+  <a href="#performance">Performance</a>
+  <a href="#associativity">Associativity</a>
+  <a href="#lru">LRU</a>
+  <a href="#multilevel">Multilevel</a>
+  <a href="#quiz">Quiz</a>
+</nav>
+
+<!-- XP BAR -->
+<div class="xp-bar">
+  <span class="xp-label">RANK</span>
+  <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+  <span class="xp-points" id="xpPoints">0 XP</span>
+  <span class="xp-rank" id="xpRank">🔩 Silicon Novice</span>
+</div>
+
+<!-- NOTIFICATION -->
+<div class="notification" id="notification"></div>
+
+<main>
+
+<!-- ═══ HERO ═══ -->
+<section id="hero" style="padding-top:5rem; max-width:100%; padding-bottom:5rem;">
+  <div class="hero-label">AMRITA CSE — COMPUTER ARCHITECTURE 2024-25</div>
+  <h1 class="hero-title fade-in-up">Memory Systems Lab</h1>
+  <p class="hero-sub fade-in-up fade-in-delay-1">
+    Master cache memory, locality, hierarchies, and performance — through interactive simulations, not passive reading.
+  </p>
+  <div class="hero-cta fade-in-up fade-in-delay-2">
+    <a href="#locality" class="btn btn-primary">▶ Begin Learning</a>
+    <a href="#quiz" class="btn btn-outline">🎮 Jump to Quiz</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;max-width:800px;margin:4rem auto 0;width:100%;">
+    <div class="stat-card fade-in-up fade-in-delay-1">
+      <div class="stat-num">10</div><div class="stat-label">Learning Levels</div>
+    </div>
+    <div class="stat-card fade-in-up fade-in-delay-2">
+      <div class="stat-num">∞</div><div class="stat-label">Simulations</div>
+    </div>
+    <div class="stat-card fade-in-up fade-in-delay-3">
+      <div class="stat-num">5</div><div class="stat-label">Formula Engines</div>
+    </div>
+    <div class="stat-card fade-in-up" style="animation-delay:0.4s;opacity:0;">
+      <div class="stat-num">XP</div><div class="stat-label">Gamified Progress</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 1+2: LOCALITY ═══ -->
+<section id="locality">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 01 — FOUNDATIONS</div>
+    <h2 class="section-title">Principle of <span class="highlight">Locality</span></h2>
+    <p class="section-desc">Why programs don't access memory randomly — and why that's the key to fast computers.</p>
+  </div>
+
+  <!-- Chef Analogy -->
+  <div class="analogy-card">
+    <div class="chef-scene">
+      <div>
+        <div class="chef-icon">👨‍🍳</div>
+      </div>
+      <div style="flex:1;">
+        <h3 style="font-size:1.3rem;margin-bottom:0.75rem;">The Chef Analogy</h3>
+        <p style="color:var(--text2);line-height:1.8;font-size:0.95rem;">
+          A chef prepares a complex menu. Instead of running to the pantry every time,
+          they keep <span class="highlight">frequently used ingredients nearby</span> — salt, oil, spices.
+          Not everything can fit on the counter (<strong>capacity limit</strong>), but smart placement
+          means less walking and faster cooking (<strong>performance boost</strong>).
+        </p>
+        <br>
+        <p style="color:var(--text2);line-height:1.8;font-size:0.95rem;">
+          Your CPU works the same way. Instead of accessing slow main memory every time,
+          it keeps recently used data in <span class="highlight">fast cache memory</span>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- Temporal Locality -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(74,222,128,0.15);border:1px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">⏱</div>
+        <div>
+          <div style="font-size:1rem;font-weight:700;">Temporal Locality</div>
+          <div style="font-size:0.72rem;color:var(--text3);font-family:'JetBrains Mono',monospace;">Locality in Time</div>
+        </div>
+      </div>
+      <p style="color:var(--text2);font-size:0.9rem;line-height:1.7;margin-bottom:1rem;">
+        If data at address X is accessed, it will likely be accessed again <strong>soon</strong>. Think: loop counters, variables used inside loops.
+      </p>
+      <div class="code-block">
+        <span class="code-comment">// Example: loop counter accessed repeatedly</span><br>
+        <span class="code-keyword">for</span> (i = <span class="code-value">0</span>; i &lt; <span class="code-value">1000</span>; i++) {<br>
+        &nbsp;&nbsp;sum += arr[i]; <span class="code-comment">// 'sum' → temporal locality</span><br>
+        }
+      </div>
+      <div id="temporalViz" style="margin-top:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);margin-bottom:0.5rem;">ACCESS PATTERN — Watch 'sum' (addr 0x00) get hit repeatedly:</div>
+        <div class="memory-tape" id="temporalTape"></div>
+      </div>
+    </div>
+
+    <!-- Spatial Locality -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+        <div style="width:40px;height:40px;border-radius:50%;background:rgba(56,189,248,0.15);border:1px solid var(--cyan);display:flex;align-items:center;justify-content:center;font-size:1.2rem;">📍</div>
+        <div>
+          <div style="font-size:1rem;font-weight:700;">Spatial Locality</div>
+          <div style="font-size:0.72rem;color:var(--text3);font-family:'JetBrains Mono',monospace;">Locality in Space</div>
+        </div>
+      </div>
+      <p style="color:var(--text2);font-size:0.9rem;line-height:1.7;margin-bottom:1rem;">
+        If address X is accessed, nearby addresses will likely be accessed <strong>soon</strong>. Think: sequential array access, instructions.
+      </p>
+      <div class="code-block">
+        <span class="code-comment">// Array elements accessed sequentially</span><br>
+        <span class="code-keyword">for</span> (i = <span class="code-value">0</span>; i &lt; <span class="code-value">8</span>; i++) {<br>
+        &nbsp;&nbsp;print(arr[i]); <span class="code-comment">// arr[0],[1],[2]... spatial!</span><br>
+        }
+      </div>
+      <div id="spatialViz" style="margin-top:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);margin-bottom:0.5rem;">ARRAY ACCESS SWEEP — Sequential addresses light up:</div>
+        <div class="memory-tape" id="spatialTape"></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1rem;" class="card">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--text2);">Run the locality simulation:</div>
+      <button class="btn btn-primary" onclick="runLocalityDemo()" style="padding:0.5rem 1.5rem;font-size:0.85rem;">▶ Animate</button>
+      <button class="btn btn-outline" onclick="resetLocality()" style="padding:0.5rem 1rem;font-size:0.85rem;">↺ Reset</button>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 2: HIERARCHY ═══ -->
+<section id="hierarchy">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 02 — MEMORY HIERARCHY</div>
+    <h2 class="section-title">The Memory <span class="highlight">Pyramid</span></h2>
+    <p class="section-desc">Multiple levels of memory with different speeds, sizes, and costs. Hover each level for details.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div style="margin-bottom:1rem;font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--text3);">
+        ← FASTER, SMALLER, PRICIER &nbsp;|&nbsp; SLOWER, BIGGER, CHEAPER →
+      </div>
+      <div class="pyramid-container" id="pyramidContainer"></div>
+      <div class="section-divider"></div>
+      <div style="font-size:0.82rem;color:var(--text2);line-height:1.7;">
+        Data is copied between <strong class="highlight">only two adjacent levels</strong> at a time.
+        As we move away from the processor, access time increases progressively.
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">STANDARD MEMORY PROCESS</div>
+      <div style="display:flex;flex-direction:column;gap:0.75rem;">
+        <div style="display:flex;gap:1rem;align-items:flex-start;padding:1rem;border-radius:8px;background:rgba(56,189,248,0.04);border:1px solid var(--border);">
+          <div style="font-size:1.5rem;min-width:40px;">💾</div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.25rem;">1. Store everything on Disk</div>
+            <div style="font-size:0.8rem;color:var(--text3);">Magnetic disk — huge capacity, very slow</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:var(--border2);font-size:1.2rem;">↑ copy recently accessed items ↑</div>
+        <div style="display:flex;gap:1rem;align-items:flex-start;padding:1rem;border-radius:8px;background:rgba(56,189,248,0.04);border:1px solid var(--border);">
+          <div style="font-size:1.5rem;min-width:40px;">🧠</div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.25rem;">2. Copy to DRAM (Main Memory)</div>
+            <div style="font-size:0.8rem;color:var(--text3);">Medium speed — much larger than cache</div>
+          </div>
+        </div>
+        <div style="text-align:center;color:var(--border2);font-size:1.2rem;">↑ copy more recently accessed items ↑</div>
+        <div style="display:flex;gap:1rem;align-items:flex-start;padding:1rem;border-radius:8px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.25);">
+          <div style="font-size:1.5rem;min-width:40px;">⚡</div>
+          <div>
+            <div style="font-weight:600;font-size:0.9rem;margin-bottom:0.25rem;color:var(--green);">3. Cache (SRAM, attached to CPU)</div>
+            <div style="font-size:0.8rem;color:var(--text3);">Fastest — tiny but blazing fast</div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1.25rem;padding:0.75rem 1rem;border-radius:8px;background:rgba(250,204,21,0.06);border:1px solid rgba(250,204,21,0.2);">
+        <span style="color:var(--yellow);font-size:0.82rem;font-weight:600;">🎯 Goal:</span>
+        <span style="font-size:0.82rem;color:var(--text2);"> Whenever possible, keep references in faster memory — with minimal cost.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hit/Miss Terminology -->
+  <div style="margin-top:1.5rem;" class="card">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1.25rem;">KEY TERMINOLOGY</div>
+    <div class="grid-3">
+      <div>
+        <div style="font-size:0.82rem;font-weight:700;color:var(--green);margin-bottom:0.4rem;">✅ Cache HIT</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.6;">Data found in upper level. Access is satisfied immediately. <br><span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);">Hit Rate = Hits / Total Accesses</span></div>
+      </div>
+      <div>
+        <div style="font-size:0.82rem;font-weight:700;color:var(--red);margin-bottom:0.4rem;">❌ Cache MISS</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.6;">Data absent — block copied from lower level. Pipeline stalls.<br><span style="font-family:'JetBrains Mono',monospace;font-size:0.7rem;color:var(--text3);">Miss Rate = 1 − Hit Rate</span></div>
+      </div>
+      <div>
+        <div style="font-size:0.82rem;font-weight:700;color:var(--orange);margin-bottom:0.4rem;">⏰ Miss Penalty</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.6;">Time to copy block from lower level. Can be 100s of cycles for main memory.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 3: TECHNOLOGIES ═══ -->
+<section id="technologies">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 03 — MEMORY TECHNOLOGIES</div>
+    <h2 class="section-title">SRAM vs DRAM vs <span class="highlight">Flash</span> vs Disk</h2>
+    <p class="section-desc">Four very different memory technologies — each with unique tradeoffs. Click to compare.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-bottom:2rem;">
+    <div class="card" style="border-color:rgba(74,222,128,0.3);">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+        <span style="font-size:2rem;">⚡</span>
+        <div>
+          <div style="font-weight:800;font-size:1.1rem;color:var(--green);">SRAM</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);">Static Random Access Memory</div>
+        </div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Speed</span><span style="color:var(--green);">0.5–2.5 ns</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:95%;background:var(--green);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Cost/GiB</span><span style="color:var(--red);">$500–$1000</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:90%;background:var(--red);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Capacity</span><span style="color:var(--text3);">Small (KB–MB)</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:10%;background:var(--cyan);"></div></div>
+      </div>
+      <div style="margin-top:1rem;font-size:0.8rem;color:var(--text2);line-height:1.7;">
+        <strong>Used for:</strong> Cache memory (L1, L2, L3)<br>
+        Fixed access time. No refresh needed. Minimal standby power. Retains data as long as powered.
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(56,189,248,0.3);">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+        <span style="font-size:2rem;">🧠</span>
+        <div>
+          <div style="font-weight:800;font-size:1.1rem;color:var(--cyan);">DRAM</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);">Dynamic Random Access Memory</div>
+        </div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Speed</span><span style="color:var(--yellow);">50–70 ns</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:60%;background:var(--yellow);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Cost/GiB</span><span style="color:var(--green);">$10–$20</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:20%;background:var(--green);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Capacity</span><span style="color:var(--cyan);">Large (GB)</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:70%;background:var(--cyan);"></div></div>
+      </div>
+      <div style="margin-top:1rem;font-size:0.8rem;color:var(--text2);line-height:1.7;">
+        <strong>Used for:</strong> Main memory (RAM)<br>
+        Data stored as charge in capacitor. Single transistor per bit → denser. Must be periodically <strong>refreshed</strong> (charge leaks).
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(251,146,60,0.3);">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+        <span style="font-size:2rem;">📱</span>
+        <div>
+          <div style="font-weight:800;font-size:1.1rem;color:var(--orange);">Flash</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);">EEPROM-based Non-volatile</div>
+        </div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Speed</span><span style="color:var(--orange);">5,000–50,000 ns</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:30%;background:var(--orange);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Cost/GiB</span><span style="color:var(--yellow);">$0.75–$1.00</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:5%;background:var(--yellow);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Capacity</span><span style="color:var(--orange);">Large (GB–TB)</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:80%;background:var(--orange);"></div></div>
+      </div>
+      <div style="margin-top:1rem;font-size:0.8rem;color:var(--text2);line-height:1.7;">
+        <strong>Used for:</strong> Mobile devices (SSD, phones)<br>
+        Non-volatile — retains data without power. Between DRAM and disk in cost and speed.
+      </div>
+    </div>
+
+    <div class="card" style="border-color:rgba(100,116,139,0.4);">
+      <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1rem;">
+        <span style="font-size:2rem;">💽</span>
+        <div>
+          <div style="font-weight:800;font-size:1.1rem;color:var(--text2);">Magnetic Disk</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:0.65rem;color:var(--text3);">Mechanical Storage</div>
+        </div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Speed</span><span style="color:var(--red);">5M–20M ns</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:5%;background:var(--red);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Cost/GiB</span><span style="color:var(--green);">$0.05–$0.10</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:1%;background:var(--green);"></div></div>
+      </div>
+      <div class="tech-bar-container">
+        <div class="tech-bar-label"><span>Capacity</span><span style="color:var(--text2);">Huge (TB)</span></div>
+        <div class="tech-bar-track"><div class="tech-bar-fill" style="width:100%;background:var(--text3);"></div></div>
+      </div>
+      <div style="margin-top:1rem;font-size:0.8rem;color:var(--text2);line-height:1.7;">
+        <strong>Used for:</strong> Servers, PCs (HDD)<br>
+        Slowest non-volatile. Largest and cheapest storage. Mechanical seek time dominates.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 4+5: CACHE BASICS & MAPPING ═══ -->
+<section id="cache-basics">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 04-05 — CACHE MEMORY & DIRECT MAPPING</div>
+    <h2 class="section-title">Cache <span class="highlight">Simulator</span></h2>
+    <p class="section-desc">8-block direct-mapped cache with the exact example from your lecture. Watch hits and misses happen in real time.</p>
+  </div>
+
+  <div class="cache-sim-layout">
+    <div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">DIRECT MAPPED CACHE — 8 BLOCKS</div>
+        <div style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.7;">
+          Formula: <strong class="highlight">Cache Index = Block Address mod 8</strong><br>
+          Low-order <strong>log₂(8) = 3 bits</strong> used as cache index.
+        </div>
+        <table class="cache-table" id="cacheTable">
+          <thead>
+            <tr><th>Index</th><th>Valid</th><th>Tag</th><th>Data (Address)</th></tr>
+          </thead>
+          <tbody id="cacheTableBody"></tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">STATS</div>
+        <div style="display:flex;gap:2rem;flex-wrap:wrap;">
+          <div class="score-item"><div class="score-num" id="hitCount" style="color:var(--green);">0</div><div class="score-label">HITS</div></div>
+          <div class="score-item"><div class="score-num" id="missCount" style="color:var(--red);">0</div><div class="score-label">MISSES</div></div>
+          <div class="score-item"><div class="score-num" id="hitRate">—</div><div class="score-label">HIT RATE</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">REFERENCE SEQUENCE</div>
+        <div class="ref-queue" id="refQueue"></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;flex-direction:column;gap:0.5rem;">
+          <button class="btn btn-primary" onclick="stepCache()" id="stepBtn">▶ Next Reference</button>
+          <button class="btn btn-outline" onclick="runAllCache()" id="runAllBtn">⚡ Run All</button>
+          <button class="btn btn-outline" onclick="resetCache()">↺ Reset</button>
+        </div>
+        <div id="cacheExplanation" style="margin-top:1rem;padding:0.75rem;border-radius:8px;background:rgba(56,189,248,0.04);border:1px solid var(--border);font-size:0.78rem;color:var(--text2);line-height:1.7;display:none;"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 6: ADDRESS BREAKDOWN ═══ -->
+<section id="address">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 06 — ADDRESS BREAKDOWN</div>
+    <h2 class="section-title">Tag · Index · <span class="highlight">Offset</span></h2>
+    <p class="section-desc">Every memory address splits into three fields. Build intuition with the interactive calculator.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1.25rem;">LIVE ADDRESS CALCULATOR (ARM — 64-bit)</div>
+
+      <div class="input-group">
+        <label class="input-label">Address Bits (fixed at 64 for ARM)</label>
+        <input class="styled-input" type="number" id="addrBits" value="64" min="8" max="64" readonly style="opacity:0.5;">
+      </div>
+      <div class="input-group">
+        <label class="input-label">n — Index bits (= log₂(number of blocks))</label>
+        <input class="styled-input" type="number" id="indexBits" value="10" min="1" max="30" oninput="calcAddress()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">m — Block size bits (= log₂(words per block))</label>
+        <input class="styled-input" type="number" id="blockBits" value="0" min="0" max="10" oninput="calcAddress()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Byte offset bits (word → byte, usually 2)</label>
+        <input class="styled-input" type="number" id="byteBits" value="2" min="0" max="4" oninput="calcAddress()">
+      </div>
+
+      <div class="result-box">
+        <div class="result-row">
+          <span class="result-key">TAG bits</span>
+          <span class="result-val" id="tagResult" style="color:var(--purple);">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">INDEX bits</span>
+          <span class="result-val" id="indexResult" style="color:var(--cyan);">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">BLOCK OFFSET bits</span>
+          <span class="result-val" id="offsetResult" style="color:var(--orange);">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">BYTE OFFSET bits</span>
+          <span class="result-val" id="byteResult" style="color:var(--orange);">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Number of Blocks (cache)</span>
+          <span class="result-val" id="numBlocks">—</span>
+        </div>
+        <div class="result-row">
+          <span class="result-key">Total Cache Bits</span>
+          <span class="result-val" id="totalBits">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">ADDRESS BIT VISUALIZATION</div>
+      <div class="addr-display" id="addrDisplay"></div>
+      <div class="addr-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:var(--purple);"></div>TAG</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--cyan);"></div>INDEX</div>
+        <div class="legend-item"><div class="legend-dot" style="background:var(--orange);"></div>OFFSET</div>
+      </div>
+      <div class="section-divider" style="margin:1.25rem 0;"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">LECTURE EXAMPLE: 16 KiB cache, 4-word blocks, 64-bit</div>
+      <div class="code-block">
+        <span class="code-comment">// Cache size = 16 KiB = 2¹⁴ bytes</span><br>
+        <span class="code-comment">// Block size = 4 words = 2² words = 2⁴ bytes</span><br>
+        <span class="code-comment">// m = 2 (block offset), byte = 2</span><br>
+        <span class="code-comment">// n = 14 - 4 = 10 (index bits)</span><br>
+        <br>
+        Tag = 64 − (n+m+2)<br>
+        &nbsp;&nbsp;&nbsp;= 64 − (10+2+2)<br>
+        &nbsp;&nbsp;&nbsp;= <span class="code-result">50 bits</span><br>
+        <br>
+        <span class="code-comment">// Address 1200: block=1200÷16=75</span><br>
+        <span class="code-comment">// Cache index = 75 mod 64 = 11</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 7: PERFORMANCE ═══ -->
+<section id="performance">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 07 — CACHE PERFORMANCE</div>
+    <h2 class="section-title">CPI · AMAT · <span class="highlight">Miss Penalty</span></h2>
+    <p class="section-desc">The math that shows why cache misses can make your CPU 2.72× slower. Interactive solver with the lecture examples.</p>
+  </div>
+
+  <!-- AMAT Visualization -->
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">AVERAGE MEMORY ACCESS TIME (AMAT)</div>
+    <div style="font-size:1.2rem;font-family:'Space Mono',monospace;color:var(--text);margin-bottom:1rem;">
+      AMAT = <span class="highlight">Hit Time</span> + <span class="highlight-red">Miss Rate</span> × <span class="highlight-yellow">Miss Penalty</span>
+    </div>
+    <div class="amat-timeline" id="amatTimeline"></div>
+    <div style="font-size:0.82rem;color:var(--text2);margin-top:0.75rem;line-height:1.7;">
+      Example: CPU with 1ns clock, hit time = 1 cycle, miss penalty = 20 cycles, miss rate = 5%<br>
+      AMAT = 1 + 0.05 × 20 = <strong class="highlight">2 ns</strong> = 2 cycles per instruction
+    </div>
+  </div>
+
+  <!-- CPI Calculator -->
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">CPI WITH MEMORY STALLS CALCULATOR</div>
+      <div style="font-size:0.82rem;color:var(--text2);margin-bottom:1rem;line-height:1.6;">
+        CPU time = (Execution Cycles + Memory Stall Cycles) × Clock Cycle Time<br>
+        Memory stalls = (Accesses/Instruction) × Miss Rate × Miss Penalty
+      </div>
+      <div class="input-group">
+        <label class="input-label">Base CPI (ideal cache)</label>
+        <input class="styled-input" type="number" id="baseCPI" value="2" step="0.1" oninput="calcCPI()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">I-Cache Miss Rate (%)</label>
+        <input class="styled-input" type="number" id="iMissRate" value="2" step="0.1" oninput="calcCPI()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">D-Cache Miss Rate (%)</label>
+        <input class="styled-input" type="number" id="dMissRate" value="4" step="0.1" oninput="calcCPI()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Loads & Stores frequency (%)</label>
+        <input class="styled-input" type="number" id="lsFreq" value="36" step="1" oninput="calcCPI()">
+      </div>
+      <div class="input-group">
+        <label class="input-label">Miss Penalty (cycles)</label>
+        <input class="styled-input" type="number" id="missPenalty" value="100" oninput="calcCPI()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">RESULTS</div>
+      <div class="result-box" id="cpiResults"></div>
+      <div class="cpi-display" style="margin-top:1rem;">
+        <div style="font-size:0.72rem;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:0.25rem;">ACTUAL CPI WITH STALLS</div>
+        <div class="cpi-number" id="actualCPI">—</div>
+      </div>
+      <div id="speedupBox" style="margin-top:1rem;padding:1rem;border-radius:8px;background:rgba(74,222,128,0.06);border:1px solid rgba(74,222,128,0.2);display:none;">
+        <div style="font-size:0.72rem;color:var(--green);font-family:'JetBrains Mono',monospace;margin-bottom:0.25rem;">PERFECT CACHE SPEEDUP</div>
+        <div style="font-family:'Space Mono',monospace;font-size:1.5rem;font-weight:700;color:var(--green);" id="speedupVal">—</div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-top:0.25rem;">times faster with no cache misses</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Write Policies -->
+  <div style="margin-top:1.5rem;">
+    <h3 style="font-size:1.2rem;margin-bottom:1rem;">Write Policies: <span class="highlight">Write-Through</span> vs <span class="highlight-purple">Write-Back</span></h3>
+    <div class="write-compare">
+      <div class="write-card through">
+        <div style="font-weight:700;color:var(--cyan);margin-bottom:0.75rem;font-size:1rem;">Write-Through</div>
+        <div style="font-size:0.85rem;color:var(--text2);line-height:1.8;">
+          Every write updates <strong>both cache AND memory</strong>.<br>
+          ✅ Simple, always consistent<br>
+          ❌ Slower — every write hits memory<br><br>
+          <strong>Example:</strong> Base CPI=1, 10% stores, memory=100 cycles<br>
+          Effective CPI = 1 + 0.1×100 = <span class="highlight-red">11</span>
+        </div>
+        <div style="margin-top:1rem;padding:0.75rem;background:rgba(56,189,248,0.05);border-radius:8px;font-size:0.8rem;color:var(--text3);">
+          <strong style="color:var(--cyan);">Write Buffer:</strong> A queue that holds data while waiting to write to memory — reduces stalls without compromising consistency.
+        </div>
+      </div>
+      <div class="write-card back">
+        <div style="font-weight:700;color:var(--purple);margin-bottom:0.75rem;font-size:1rem;">Write-Back</div>
+        <div style="font-size:0.85rem;color:var(--text2);line-height:1.8;">
+          Write only to <strong>cache block</strong>. Write to memory only when block is <strong>evicted</strong>.<br>
+          ✅ Faster — writes stay in cache<br>
+          ❌ More complex, uses "dirty bit"<br><br>
+          Uses a <strong>dirty bit</strong> per cache block to track modifications.
+        </div>
+        <div style="margin-top:1rem;padding:0.75rem;background:rgba(167,139,250,0.05);border-radius:8px;font-size:0.8rem;color:var(--text3);">
+          <strong style="color:var(--purple);">Best when:</strong> Processors generate writes faster than main memory can handle them (common in modern CPUs).
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 8: ASSOCIATIVITY ═══ -->
+<section id="associativity">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 08 — ASSOCIATIVE CACHES</div>
+    <h2 class="section-title">Direct · Set · <span class="highlight">Fully Associative</span></h2>
+    <p class="section-desc">Compare all three mapping strategies with the exact lecture example. Access sequence: 0, 8, 0, 6, 8.</p>
+  </div>
+
+  <div class="assoc-tabs">
+    <button class="assoc-tab active" onclick="switchAssoc('direct', this)">Direct Mapped</button>
+    <button class="assoc-tab" onclick="switchAssoc('2way', this)">2-Way Set Assoc</button>
+    <button class="assoc-tab" onclick="switchAssoc('full', this)">Fully Associative</button>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);">Access sequence: <strong>0 → 8 → 0 → 6 → 8</strong> (4-block cache)</div>
+      <button class="btn btn-primary" onclick="stepAssoc()" style="padding:0.4rem 1rem;font-size:0.8rem;" id="assocStepBtn">▶ Step</button>
+      <button class="btn btn-outline" onclick="resetAssoc()" style="padding:0.4rem 1rem;font-size:0.8rem;">↺ Reset</button>
+    </div>
+    <div id="assocViz" class="assoc-grid"></div>
+    <div id="assocLog" style="margin-top:1.25rem;"></div>
+    <div id="assocResult" style="margin-top:1rem;display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">CONCEPT COMPARISON</div>
+    <div class="grid-3">
+      <div>
+        <div style="font-weight:700;margin-bottom:0.5rem;">Direct Mapped</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.7;">
+          Each block → exactly one cache location<br>
+          Formula: addr mod #blocks<br>
+          ✅ Fast lookup (1 comparator)<br>
+          ❌ Conflict misses
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:0.5rem;color:var(--cyan);">n-Way Set Associative</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.7;">
+          Block → one of n slots in a set<br>
+          Set = addr mod #sets<br>
+          ✅ Fewer conflicts<br>
+          n comparators per set
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:700;margin-bottom:0.5rem;color:var(--purple);">Fully Associative</div>
+        <div style="font-size:0.82rem;color:var(--text2);line-height:1.7;">
+          Block → any cache location<br>
+          Search all entries simultaneously<br>
+          ✅ No conflict misses<br>
+          ❌ Expensive — comparator per entry
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 9: LRU ═══ -->
+<section id="lru">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 09 — REPLACEMENT POLICY</div>
+    <h2 class="section-title">LRU — Least Recently <span class="highlight">Used</span></h2>
+    <p class="section-desc">When cache is full and a miss occurs, which block do we evict? Simulate LRU replacement interactively.</p>
+  </div>
+
+  <div class="card" style="margin-bottom:1.5rem;">
+    <div style="font-size:0.9rem;color:var(--text2);line-height:1.7;margin-bottom:1.5rem;">
+      In LRU: the block that hasn't been accessed for the <strong>longest time</strong> gets replaced on a miss.
+      The LRU state is tracked per block — "most recently used" stays, "least recently used" leaves.
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">LRU QUEUE (Left = Most Recent, Right = Victim)</div>
+    <div class="lru-queue" id="lruQueue"></div>
+    <div style="margin-top:1rem;display:flex;gap:0.75rem;flex-wrap:wrap;align-items:center;">
+      <div style="display:flex;gap:0.5rem;align-items:center;flex:1;min-width:200px;">
+        <input class="styled-input" type="number" id="lruInput" placeholder="Enter block address (0-15)" min="0" max="15" style="flex:1;">
+        <button class="btn btn-primary" onclick="lruAccess()" style="padding:0.55rem 1rem;font-size:0.85rem;white-space:nowrap;">Access</button>
+      </div>
+      <button class="btn btn-outline" onclick="resetLRU()" style="padding:0.55rem 1rem;font-size:0.85rem;">↺ Reset</button>
+    </div>
+    <div id="lruLog" style="margin-top:1rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text2);line-height:1.8;"></div>
+  </div>
+
+  <div class="card">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">IN DIRECT-MAPPED CACHE</div>
+    <div style="font-size:0.85rem;color:var(--text2);line-height:1.7;">
+      When a miss occurs in direct-mapped cache, there is <strong>only one possible location</strong> — so replacement is automatic
+      (no choice). LRU is relevant for <strong>set-associative</strong> and <strong>fully associative</strong> caches where multiple candidates exist.
+      For 2-way set-associative with 2 blocks per set, we track which was used less recently.
+    </div>
+  </div>
+</section>
+
+<!-- ═══ LEVEL 10: MULTILEVEL ═══ -->
+<section id="multilevel">
+  <div class="section-header">
+    <div class="section-tag">// LEVEL 10 — ADVANCED ARCHITECTURE</div>
+    <h2 class="section-title">Multilevel <span class="highlight">Cache</span></h2>
+    <p class="section-desc">Modern CPUs use L1, L2, L3 caches. Simulate a memory access traveling through the hierarchy.</p>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">MULTILEVEL HIERARCHY SIMULATION</div>
+      <div class="multilevel-viz" id="mlViz"></div>
+      <div style="margin-top:1.5rem;display:flex;gap:0.75rem;flex-wrap:wrap;">
+        <button class="btn btn-primary" onclick="simulateML('hit1')" style="font-size:0.8rem;padding:0.5rem 1rem;">L1 Hit</button>
+        <button class="btn btn-outline" onclick="simulateML('miss1hit2')" style="font-size:0.8rem;padding:0.5rem 1rem;">L1 Miss, L2 Hit</button>
+        <button class="btn btn-outline" onclick="simulateML('missall')" style="font-size:0.8rem;padding:0.5rem 1rem;">All Miss (→ RAM)</button>
+        <button class="btn btn-outline" onclick="simulateML('reset')" style="font-size:0.8rem;padding:0.5rem 0.75rem;">↺</button>
+      </div>
+      <div id="mlLog" style="margin-top:1rem;font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:var(--text2);line-height:1.8;"></div>
+    </div>
+
+    <div class="card">
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">WHY MULTILEVEL CACHES?</div>
+      <div style="font-size:0.88rem;color:var(--text2);line-height:1.8;">
+        <strong class="highlight">The Problem:</strong> Fast CPUs need fast memory access, but main memory is 100× slower.<br><br>
+        <strong class="highlight">The Solution:</strong> Add an intermediate L2 cache on-chip.<br><br>
+        When L1 misses: check L2 first. L2 hit → miss penalty = L2 access time (much less than RAM).<br><br>
+        When both miss: access main memory (large penalty).<br><br>
+        <strong class="highlight">Result:</strong> Smaller average miss penalty → better AMAT.
+      </div>
+      <div class="section-divider"></div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:0.75rem;">MULTILEVEL AMAT FORMULA</div>
+      <div class="code-block">
+        AMAT = L1_hit_time<br>
+             + L1_miss_rate × (L2_hit_time<br>
+             + L2_miss_rate × Mem_access_time)<br>
+        <br>
+        <span class="code-comment">// Example values:</span><br>
+        L1 hit = <span class="code-value">1</span> cycle (SRAM)<br>
+        L2 hit = <span class="code-value">10</span> cycles (on-chip SRAM)<br>
+        RAM = <span class="code-value">200</span> cycles (DRAM)<br>
+        L1 miss rate = <span class="code-value">5%</span><br>
+        L2 miss rate = <span class="code-value">1%</span><br>
+        <br>
+        AMAT = 1 + 0.05 × (10 + 0.01 × 200)<br>
+             = 1 + 0.05 × 12<br>
+             = <span class="code-result">1.6 cycles</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ QUIZ ═══ -->
+<section id="quiz">
+  <div class="section-header">
+    <div class="section-tag">// BOSS LEVEL — QUIZ BATTLE</div>
+    <h2 class="section-title">Test Your <span class="highlight">Mastery</span></h2>
+    <p class="section-desc">10 questions covering everything from the lecture. Earn XP for each correct answer.</p>
+  </div>
+
+  <div class="quiz-score">
+    <div class="score-item"><div class="score-num" id="qCorrect" style="color:var(--green);">0</div><div class="score-label">CORRECT</div></div>
+    <div class="score-item"><div class="score-num" id="qWrong" style="color:var(--red);">0</div><div class="score-label">WRONG</div></div>
+    <div class="score-item"><div class="score-num" id="qTotal">0/10</div><div class="score-label">PROGRESS</div></div>
+  </div>
+
+  <div class="step-indicator" id="quizProgress"></div>
+
+  <div id="quizContainer"></div>
+  <div style="text-align:center;margin-top:1.5rem;">
+    <button class="btn btn-outline" onclick="nextQuestion()" id="nextQBtn" style="display:none;">Next Question →</button>
+    <button class="btn btn-primary" onclick="restartQuiz()" id="restartQBtn" style="display:none;">↺ Restart Quiz</button>
+  </div>
+
+  <!-- Skill Tree -->
+  <div style="margin-top:3rem;" class="card">
+    <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;color:var(--cyan);margin-bottom:1rem;">🌳 MEMORY ARCHITECT SKILL TREE</div>
+    <div class="skill-tree" id="skillTree"></div>
+  </div>
+</section>
+
+</main>
+
+<script>
+// ═══ XP SYSTEM ═══
+let xp = 0;
+const ranks = [
+  [0,   '🔩 Silicon Novice'],
+  [50,  '⚙️ Cache Apprentice'],
+  [150, '🔧 Index Engineer'],
+  [300, '💡 Tag Architect'],
+  [500, '🧠 Cache Wizard'],
+  [750, '⚡ Memory Master'],
+  [1000,'🚀 Hardware Legend'],
+];
+function addXP(amount, label) {
+  xp += amount;
+  document.getElementById('xpPoints').textContent = xp + ' XP';
+  const fill = Math.min((xp % 250) / 250 * 100, 100);
+  document.getElementById('xpFill').style.width = fill + '%';
+  const rank = ranks.filter(r => xp >= r[0]).pop();
+  document.getElementById('xpRank').textContent = rank[1];
+  showNotification('+' + amount + ' XP — ' + label, 'xp-notif');
+  updateSkillTree();
+}
+function showNotification(msg, cls) {
+  const n = document.getElementById('notification');
+  n.textContent = msg; n.className = 'notification ' + cls + ' show';
+  setTimeout(() => n.classList.remove('show'), 2500);
+}
+
+// ═══ LOCALITY DEMO ═══
+function buildTapes() {
+  const tTape = document.getElementById('temporalTape');
+  const sTape = document.getElementById('spatialTape');
+  tTape.innerHTML = ''; sTape.innerHTML = '';
+  const addrs = ['0x00 [sum]','0x04 [i]','0x08 [arr+0]','0x0C [arr+1]','0x10 [arr+2]','0x14 [arr+3]','0x18 [arr+4]','0x1C [arr+5]'];
+  addrs.forEach((a,i) => {
+    const t = document.createElement('div'); t.className='tape-cell'; t.id='tc'+i; t.textContent=a;
+    const s = document.createElement('div'); s.className='tape-cell'; s.id='sc'+i; s.textContent=a;
+    tTape.appendChild(t); sTape.appendChild(s);
+  });
+}
+let localityInterval = null;
+function runLocalityDemo() {
+  if(localityInterval) clearInterval(localityInterval);
+  resetLocality();
+  // Temporal: sum (addr 0) and i (addr 1) accessed repeatedly
+  const temporalSeq = [0,1,2,0,1,3,0,1,4,0,1,5,0,1];
+  // Spatial: sequential scan
+  const spatialSeq = [0,1,2,3,4,5,6,7,6,5,4,3,2,1];
+  let idx = 0;
+  localityInterval = setInterval(() => {
+    if(idx >= Math.max(temporalSeq.length, spatialSeq.length)) {
+      clearInterval(localityInterval); return;
+    }
+    // Reset all
+    for(let j=0;j<8;j++) {
+      document.getElementById('tc'+j).className='tape-cell';
+      document.getElementById('sc'+j).className='tape-cell';
+    }
+    if(idx < temporalSeq.length) document.getElementById('tc'+temporalSeq[idx]).className='tape-cell active-temporal';
+    if(idx < spatialSeq.length) document.getElementById('sc'+spatialSeq[idx]).className='tape-cell active-spatial';
+    idx++;
+  }, 400);
+}
+function resetLocality() {
+  if(localityInterval) clearInterval(localityInterval);
+  for(let j=0;j<8;j++) {
+    const tc = document.getElementById('tc'+j);
+    const sc = document.getElementById('sc'+j);
+    if(tc) tc.className='tape-cell';
+    if(sc) sc.className='tape-cell';
+  }
+}
+buildTapes();
+
+// ═══ MEMORY HIERARCHY PYRAMID ═══
+const pyramidLevels = [
+  {name:'CPU Registers', color:'#a78bfa', width:'25%', bg:'rgba(167,139,250,0.15)', access:'< 1 cycle', size:'~1 KB', cost:'—', tech:'On-chip flip-flops'},
+  {name:'L1 Cache', color:'#38bdf8', width:'35%', bg:'rgba(56,189,248,0.12)', access:'1–4 cycles', size:'32–256 KB', cost:'SRAM', tech:'On-chip SRAM'},
+  {name:'L2 Cache', color:'#22d3ee', width:'45%', bg:'rgba(34,211,238,0.1)', access:'10–30 cycles', size:'256 KB–8 MB', cost:'SRAM', tech:'On-chip/near-chip SRAM'},
+  {name:'L3 Cache', color:'#67e8f9', width:'55%', bg:'rgba(103,232,249,0.08)', access:'30–60 cycles', size:'4–64 MB', cost:'SRAM', tech:'Shared on-chip SRAM'},
+  {name:'Main Memory', color:'#4ade80', width:'68%', bg:'rgba(74,222,128,0.06)', access:'50–70 ns', size:'GB range', cost:'$10–$20/GiB', tech:'DRAM'},
+  {name:'Magnetic Disk', color:'#94a3b8', width:'85%', bg:'rgba(148,163,184,0.04)', access:'5–20 ms', size:'TB range', cost:'$0.05/GiB', tech:'Magnetic'},
+];
+function buildPyramid() {
+  const c = document.getElementById('pyramidContainer');
+  pyramidLevels.forEach((lvl,i) => {
+    const el = document.createElement('div');
+    el.className = 'pyramid-level';
+    el.style.cssText = `width:${lvl.width};background:${lvl.bg};border-color:${lvl.color}30;padding:0.6rem;`;
+    el.innerHTML = `
+      <div class="level-label" style="color:${lvl.color};">${lvl.name}</div>
+      <div class="level-meta">${lvl.access} · ${lvl.size}</div>
+      <div class="level-info-popup">
+        <strong>${lvl.name}</strong><br>
+        Access: ${lvl.access}<br>
+        Size: ${lvl.size}<br>
+        Cost: ${lvl.cost}<br>
+        Tech: ${lvl.tech}
+      </div>`;
+    c.appendChild(el);
+  });
+}
+buildPyramid();
+
+// ═══ CACHE SIMULATOR ═══
+const refs = [
+  {dec:22,bin:'10110',idx:'110',tag:'10',miss:true},
+  {dec:26,bin:'11010',idx:'010',tag:'11',miss:true},
+  {dec:22,bin:'10110',idx:'110',tag:'10',miss:false},
+  {dec:26,bin:'11010',idx:'010',tag:'11',miss:false},
+  {dec:16,bin:'10000',idx:'000',tag:'10',miss:true},
+  {dec:3, bin:'00011',idx:'011',tag:'00',miss:true},
+  {dec:16,bin:'10000',idx:'000',tag:'10',miss:false},
+  {dec:18,bin:'10010',idx:'010',tag:'10',miss:true},
+  {dec:16,bin:'10000',idx:'000',tag:'10',miss:false},
+];
+let cacheState = Array(8).fill(null).map(()=>({valid:false,tag:'',data:''}));
+let refStep = 0, hits=0, misses=0;
+
+function initCacheTable() {
+  const tb = document.getElementById('cacheTableBody');
+  tb.innerHTML = '';
+  for(let i=0;i<8;i++) {
+    const r = document.createElement('tr');
+    r.id = 'cr'+i;
+    r.innerHTML = `<td>${i.toString(2).padStart(3,'0')}</td><td id="cv${i}">N</td><td id="ct${i}"></td><td id="cd${i}"></td>`;
+    tb.appendChild(r);
+  }
+}
+function initRefQueue() {
+  const q = document.getElementById('refQueue');
+  q.innerHTML = '';
+  refs.forEach((r,i) => {
+    const el = document.createElement('div');
+    el.className = 'ref-item pending';
+    el.id = 'rq'+i;
+    el.innerHTML = `<span>Addr: <strong>${r.dec}</strong> (${r.bin}₂)</span><span class="badge" id="rb${i}"></span>`;
+    q.appendChild(el);
+  });
+}
+function stepCache() {
+  if(refStep >= refs.length) return;
+  const ref = refs[refStep];
+  const idxNum = parseInt(ref.idx, 2);
+  const prev = refs.slice(0,refStep);
+  
+  // Mark previous current as done
+  if(refStep > 0) {
+    const prevRef = refs[refStep-1];
+    const prevEl = document.getElementById('rq'+(refStep-1));
+    if(prevRef.miss) { prevEl.className='ref-item miss-done'; document.getElementById('rb'+(refStep-1)).innerHTML='<span class="badge badge-miss">MISS</span>'; }
+    else { prevEl.className='ref-item hit-done'; document.getElementById('rb'+(refStep-1)).innerHTML='<span class="badge badge-hit">HIT</span>'; }
+  }
+  
+  // Reset all rows
+  for(let i=0;i<8;i++) document.getElementById('cr'+i).className='highlighted' === document.getElementById('cr'+i).className ? '' : '';
+  
+  // Mark current ref
+  document.getElementById('rq'+refStep).className='ref-item current';
+  
+  if(ref.miss) {
+    misses++;
+    cacheState[idxNum] = {valid:true, tag:ref.tag, data:ref.bin};
+    document.getElementById('cv'+idxNum).textContent = 'Y';
+    document.getElementById('ct'+idxNum).textContent = ref.tag+'₂';
+    document.getElementById('cd'+idxNum).textContent = 'Mem('+ref.bin+'₂)';
+    document.getElementById('cr'+idxNum).className = 'miss-row';
+    const expl = `MISS — Addr ${ref.dec} (${ref.bin}₂) → Index ${ref.idx}₂ = ${idxNum}, Tag=${ref.tag}₂<br>Block loaded from memory into cache[${idxNum}]. Pipeline stall occurs.`;
+    showExplanation(expl);
+    showNotification('CACHE MISS — addr ' + ref.dec, 'miss-notif');
+  } else {
+    hits++;
+    document.getElementById('cr'+idxNum).className = 'hit-row';
+    const expl = `HIT ✅ — Addr ${ref.dec} (${ref.bin}₂) → Index ${ref.idx}₂ = ${idxNum}<br>Valid=Y, Tag matches ${ref.tag}₂. Data served from cache instantly!`;
+    showExplanation(expl);
+    showNotification('CACHE HIT! addr ' + ref.dec, 'hit-notif');
+    addXP(10, 'Cache analysis');
+  }
+  
+  document.getElementById('hitCount').textContent = hits;
+  document.getElementById('missCount').textContent = misses;
+  document.getElementById('hitRate').textContent = ((hits/(hits+misses))*100).toFixed(0)+'%';
+  
+  refStep++;
+  if(refStep >= refs.length) {
+    // Mark last
+    const lastRef = refs[refStep-1];
+    const lastEl = document.getElementById('rq'+(refStep-1));
+    setTimeout(()=>{
+      if(lastRef.miss) { lastEl.className='ref-item miss-done'; document.getElementById('rb'+(refStep-1)).innerHTML='<span class="badge badge-miss">MISS</span>'; }
+      else { lastEl.className='ref-item hit-done'; document.getElementById('rb'+(refStep-1)).innerHTML='<span class="badge badge-hit">HIT</span>'; }
+    },300);
+    document.getElementById('stepBtn').disabled = true;
+    document.getElementById('runAllBtn').disabled = true;
+    addXP(50, 'Cache simulation complete!');
+  }
+}
+function runAllCache() {
+  if(refStep >= refs.length) return;
+  const remaining = refs.length - refStep;
+  let i = 0;
+  const iv = setInterval(()=>{ if(i++ >= remaining || refStep >= refs.length) {clearInterval(iv);return;} stepCache(); }, 600);
+}
+function resetCache() {
+  cacheState = Array(8).fill(null).map(()=>({valid:false,tag:'',data:''}));
+  refStep = 0; hits = 0; misses = 0;
+  document.getElementById('hitCount').textContent='0';
+  document.getElementById('missCount').textContent='0';
+  document.getElementById('hitRate').textContent='—';
+  document.getElementById('stepBtn').disabled=false;
+  document.getElementById('runAllBtn').disabled=false;
+  document.getElementById('cacheExplanation').style.display='none';
+  initCacheTable(); initRefQueue();
+}
+function showExplanation(html) {
+  const el = document.getElementById('cacheExplanation');
+  el.style.display='block'; el.innerHTML=html;
+}
+initCacheTable(); initRefQueue();
+
+// ═══ ADDRESS CALCULATOR ═══
+function calcAddress() {
+  const n = parseInt(document.getElementById('indexBits').value)||0;
+  const m = parseInt(document.getElementById('blockBits').value)||0;
+  const b = parseInt(document.getElementById('byteBits').value)||0;
+  const total = 64;
+  const tag = total - n - m - b;
+  const offset = m + b;
+  document.getElementById('tagResult').textContent = tag + ' bits';
+  document.getElementById('indexResult').textContent = n + ' bits';
+  document.getElementById('offsetResult').textContent = m + ' bits (block)';
+  document.getElementById('byteResult').textContent = b + ' bits';
+  document.getElementById('numBlocks').textContent = Math.pow(2,n).toLocaleString();
+  const blockSize = Math.pow(2, m+b);
+  const totalBitsCalc = Math.pow(2,n) * (blockSize * 8 + tag + 1);
+  document.getElementById('totalBits').textContent = (totalBitsCalc/8/1024).toFixed(1) + ' KiB equiv';
+  buildAddrDisplay(tag, n, offset);
+}
+function buildAddrDisplay(tagB, idxB, offB) {
+  const disp = document.getElementById('addrDisplay');
+  disp.innerHTML = '';
+  const total = tagB + idxB + offB;
+  let used = 0;
+  for(let i=total-1;i>=0;i--) {
+    const b = document.createElement('div');
+    b.className='addr-bit ';
+    if(i >= idxB + offB) b.classList.add('tag-bit');
+    else if(i >= offB) b.classList.add('index-bit');
+    else b.classList.add('offset-bit');
+    b.textContent = '?';
+    if(used<3) disp.appendChild(b);
+    used++;
+    if(used===3 && total>6) {
+      const dots = document.createElement('div');
+      dots.style.cssText='display:flex;align-items:center;padding:0 0.25rem;color:var(--text3);font-family:"Space Mono",monospace;';
+      dots.textContent='···';
+      disp.appendChild(dots);
+    }
+  }
+}
+calcAddress();
+
+// AMAT timeline
+function buildAMAT() {
+  const tl = document.getElementById('amatTimeline');
+  tl.innerHTML = `
+    <div class="amat-segment amat-hit" style="min-width:80px;">Hit Time<br>1 cycle</div>
+    <div class="amat-eq">+</div>
+    <div class="amat-segment amat-miss" style="min-width:80px;">Miss Rate<br>5%</div>
+    <div class="amat-eq">×</div>
+    <div class="amat-segment amat-miss" style="min-width:100px;">Miss Penalty<br>20 cycles</div>
+    <div class="amat-eq">=</div>
+    <div class="amat-segment" style="background:rgba(250,204,21,0.15);border:1px solid var(--yellow);color:var(--yellow);min-width:80px;">AMAT<br>2 ns</div>
+  `;
+}
+buildAMAT();
+
+// ═══ CPI CALCULATOR ═══
+function calcCPI() {
+  const base = parseFloat(document.getElementById('baseCPI').value)||0;
+  const im = parseFloat(document.getElementById('iMissRate').value)||0;
+  const dm = parseFloat(document.getElementById('dMissRate').value)||0;
+  const ls = parseFloat(document.getElementById('lsFreq').value)||0;
+  const pen = parseFloat(document.getElementById('missPenalty').value)||0;
+  const iStall = (im/100) * pen;
+  const dStall = (ls/100) * (dm/100) * pen;
+  const totalStall = iStall + dStall;
+  const actualCPI = base + totalStall;
+  const speedup = actualCPI / base;
+  document.getElementById('cpiResults').innerHTML = `
+    <div class="result-row"><span class="result-key">I-cache miss cycles/instruction</span><span class="result-val">${iStall.toFixed(2)}</span></div>
+    <div class="result-row"><span class="result-key">D-cache miss cycles/instruction</span><span class="result-val">${dStall.toFixed(2)}</span></div>
+    <div class="result-row"><span class="result-key">Total stall cycles/instruction</span><span class="result-val" style="color:var(--red);">${totalStall.toFixed(2)}</span></div>
+    <div class="result-row"><span class="result-key">Base CPI</span><span class="result-val" style="color:var(--green);">${base}</span></div>
+  `;
+  document.getElementById('actualCPI').textContent = actualCPI.toFixed(2);
+  const speedupBox = document.getElementById('speedupBox');
+  speedupBox.style.display='block';
+  document.getElementById('speedupVal').textContent = speedup.toFixed(2) + '×';
+}
+calcCPI();
+
+// ═══ ASSOCIATIVITY SIMULATOR ═══
+let assocMode = 'direct';
+let assocStep = 0;
+const assocSeq = [0,8,0,6,8];
+
+// Direct: 4 blocks
+const directResults = [
+  {addr:0, idx:0, hit:false, state:[{bl:0,tag:0},{bl:null},{bl:null},{bl:null}]},
+  {addr:8, idx:0, hit:false, state:[{bl:8,tag:8},{bl:null},{bl:null},{bl:null}]},
+  {addr:0, idx:0, hit:false, state:[{bl:0,tag:0},{bl:null},{bl:null},{bl:null}]},
+  {addr:6, idx:2, hit:false, state:[{bl:0,tag:0},{bl:null},{bl:6,tag:6},{bl:null}]},
+  {addr:8, idx:0, hit:false, state:[{bl:8,tag:8},{bl:null},{bl:6,tag:6},{bl:null}]},
+];
+const way2Results = [
+  {addr:0, set:0, hit:false, state:[[0,null],[null,null]]},
+  {addr:8, set:0, hit:false, state:[[0,8],[null,null]]},
+  {addr:0, set:0, hit:true,  state:[[0,8],[null,null]]},
+  {addr:6, set:0, hit:false, state:[[0,6],[null,null]]},  // LRU evicts 8
+  {addr:8, set:0, hit:false, state:[[8,6],[null,null]]},  // LRU evicts 0? but 6 was just used
+];
+const fullResults = [
+  {addr:0, hit:false, state:[0,null,null,null]},
+  {addr:8, hit:false, state:[0,8,null,null]},
+  {addr:0, hit:true,  state:[0,8,null,null]},
+  {addr:6, hit:false, state:[0,8,6,null]},
+  {addr:8, hit:true,  state:[0,8,6,null]},
+];
+
+function switchAssoc(mode, btn) {
+  assocMode = mode;
+  assocStep = 0;
+  document.querySelectorAll('.assoc-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderAssocViz();
+  document.getElementById('assocLog').innerHTML='';
+  document.getElementById('assocResult').style.display='none';
+  document.getElementById('assocStepBtn').disabled=false;
+}
+
+function renderAssocViz() {
+  const viz = document.getElementById('assocViz');
+  viz.innerHTML='';
+  if(assocMode==='direct') {
+    const labels=['Block 0','Block 1','Block 2','Block 3'];
+    labels.forEach((l,i)=>{
+      const s=document.createElement('div'); s.className='assoc-set';
+      s.innerHTML=`<div class="assoc-set-label">${l}</div><div class="assoc-block" id="ab_d${i}">empty</div>`;
+      viz.appendChild(s);
+    });
+  } else if(assocMode==='2way') {
+    ['Set 0','Set 1'].forEach((l,i)=>{
+      const s=document.createElement('div'); s.className='assoc-set';
+      s.innerHTML=`<div class="assoc-set-label">${l}</div><div class="assoc-block" id="ab_2w${i}_0">way 0</div><div class="assoc-block" id="ab_2w${i}_1">way 1</div>`;
+      viz.appendChild(s);
+    });
+  } else {
+    const s=document.createElement('div'); s.className='assoc-set'; s.style.flexDirection='row'; s.style.flexWrap='wrap';
+    s.innerHTML=`<div class="assoc-set-label" style="width:100%">Any block:</div>${[0,1,2,3].map(i=>`<div class="assoc-block" id="ab_fa${i}" style="min-width:80px;">slot ${i}</div>`).join('')}`;
+    viz.appendChild(s);
+  }
+}
+
+let directCache=[null,null,null,null];
+let way2Cache=[[null,null],[null,null]];
+let fullCache=[null,null,null,null];
+
+function stepAssoc() {
+  if(assocStep>=assocSeq.length) return;
+  const addr=assocSeq[assocStep];
+  let hit=false, logMsg='';
+
+  if(assocMode==='direct') {
+    const idx=addr%4;
+    hit = (directCache[idx]===addr);
+    if(!hit) directCache[idx]=addr;
+    for(let i=0;i<4;i++){
+      const el=document.getElementById('ab_d'+i);
+      if(el){
+        el.className='assoc-block '+(directCache[i]!==null?'filled':'');
+        el.textContent=directCache[i]!==null?'Mem['+directCache[i]+']':'empty';
+        if(i===idx) el.className='assoc-block '+(hit?'hit-block':'miss-block');
+      }
+    }
+    logMsg=`Addr <strong>${addr}</strong> → Index ${idx} → <span style="color:${hit?'var(--green)':'var(--red)'};">${hit?'HIT ✅':'MISS ❌'}</span>`;
+  } else if(assocMode==='2way') {
+    const set=addr%2;
+    hit=way2Cache[set].includes(addr);
+    if(!hit){
+      if(way2Cache[set][0]===null) way2Cache[set][0]=addr;
+      else if(way2Cache[set][1]===null) way2Cache[set][1]=addr;
+      else { way2Cache[set][0]=way2Cache[set][1]; way2Cache[set][1]=addr; }
+    }
+    for(let i=0;i<2;i++){
+      for(let w=0;w<2;w++){
+        const el=document.getElementById(`ab_2w${i}_${w}`);
+        if(el){
+          const v=way2Cache[i][w];
+          el.className='assoc-block '+(v!==null?'filled':'');
+          el.textContent=v!==null?'Mem['+v+']':'empty';
+          if(i===set && v===addr && hit) el.className='assoc-block hit-block';
+          if(i===set && !hit && v===addr) el.className='assoc-block miss-block';
+        }
+      }
+    }
+    logMsg=`Addr <strong>${addr}</strong> → Set ${set} → <span style="color:${hit?'var(--green)':'var(--red)'};">${hit?'HIT ✅':'MISS ❌'}</span>`;
+  } else {
+    hit=fullCache.includes(addr);
+    if(!hit){
+      const empty=fullCache.findIndex(x=>x===null);
+      if(empty>=0) fullCache[empty]=addr;
+      else { fullCache.shift(); fullCache.push(addr); }
+    }
+    fullCache.forEach((v,i)=>{
+      const el=document.getElementById('ab_fa'+i);
+      if(el){
+        el.className='assoc-block '+(v!==null?'filled':'');
+        el.textContent=v!==null?'Mem['+v+']':'empty';
+        if(v===addr && hit) el.className='assoc-block hit-block';
+        if(v===addr && !hit) el.className='assoc-block miss-block';
+      }
+    });
+    logMsg=`Addr <strong>${addr}</strong> → Any slot → <span style="color:${hit?'var(--green)':'var(--red)'};">${hit?'HIT ✅':'MISS ❌'}</span>`;
+  }
+
+  const log=document.getElementById('assocLog');
+  log.innerHTML+=`<div style="font-family:'JetBrains Mono',monospace;font-size:0.78rem;padding:0.3rem 0;border-bottom:1px solid var(--border);">Step ${assocStep+1}: ${logMsg}</div>`;
+  if(hit) addXP(5,'Associativity analysis');
+  assocStep++;
+  if(assocStep>=assocSeq.length){
+    document.getElementById('assocStepBtn').disabled=true;
+  }
+}
+function resetAssoc(){
+  assocStep=0; directCache=[null,null,null,null];
+  way2Cache=[[null,null],[null,null]]; fullCache=[null,null,null,null];
+  renderAssocViz();
+  document.getElementById('assocLog').innerHTML='';
+  document.getElementById('assocStepBtn').disabled=false;
+}
+switchAssoc('direct',document.querySelector('.assoc-tab'));
+
+// ═══ LRU SIMULATOR ═══
+let lruCache=[]; const LRU_SIZE=4;
+function renderLRU(){
+  const q=document.getElementById('lruQueue');
+  q.innerHTML='';
+  if(lruCache.length===0){q.innerHTML='<span style="color:var(--text3);font-family:JetBrains Mono,monospace;font-size:0.8rem;">Cache is empty — enter a block address to begin</span>';return;}
+  lruCache.forEach((v,i)=>{
+    const b=document.createElement('div');
+    b.className='lru-block '+(i===0?'lru-newest':i===lruCache.length-1&&lruCache.length===LRU_SIZE?'lru-victim':'lru-mid');
+    b.innerHTML=`<span>Mem[${v}]</span><span class="lru-age">${i===0?'MRU':i===lruCache.length-1?'LRU':'age '+(i+1)}</span>`;
+    q.appendChild(b);
+    if(i<lruCache.length-1){const arr=document.createElement('div');arr.className='lru-arrow';arr.textContent='←';q.appendChild(arr);}
+  });
+}
+function lruAccess(){
+  const val=parseInt(document.getElementById('lruInput').value);
+  if(isNaN(val)||val<0||val>15){showNotification('Enter 0–15','miss-notif');return;}
+  const log=document.getElementById('lruLog');
+  const exists=lruCache.indexOf(val);
+  if(exists>=0){
+    lruCache.splice(exists,1); lruCache.unshift(val);
+    log.innerHTML=`<span style="color:var(--green);">HIT — Mem[${val}] moved to MRU position</span><br>`+log.innerHTML;
+    showNotification('LRU HIT! Block '+val,'hit-notif'); addXP(5,'LRU analysis');
+  } else {
+    let evicted='none';
+    if(lruCache.length>=LRU_SIZE){evicted=lruCache.pop();}
+    lruCache.unshift(val);
+    if(evicted!=='none') log.innerHTML=`<span style="color:var(--red);">MISS — Mem[${val}] loaded, Mem[${evicted}] evicted (LRU)</span><br>`+log.innerHTML;
+    else log.innerHTML=`<span style="color:var(--orange);">MISS — Mem[${val}] loaded (cache not full)</span><br>`+log.innerHTML;
+    showNotification('LRU MISS — evicted Mem['+evicted+']','miss-notif');
+  }
+  renderLRU();
+  document.getElementById('lruInput').value='';
+}
+function resetLRU(){lruCache=[];renderLRU();document.getElementById('lruLog').innerHTML='';}
+renderLRU();
+
+// ═══ MULTILEVEL CACHE ═══
+const mlLevels=[
+  {name:'CPU', meta:'0 cycles', icon:'⚡', id:'ml0'},
+  {name:'L1 Cache (SRAM)', meta:'1–4 cycles · 32KB', icon:'🔵', id:'ml1'},
+  {name:'L2 Cache (SRAM)', meta:'10–30 cycles · 4MB', icon:'🟢', id:'ml2'},
+  {name:'Main Memory (DRAM)', meta:'50–70 ns · GBs', icon:'🟡', id:'ml3'},
+];
+function buildMLViz(){
+  const v=document.getElementById('mlViz');
+  v.innerHTML='';
+  mlLevels.forEach((l,i)=>{
+    const el=document.createElement('div'); el.className='ml-level'; el.id=l.id;
+    el.innerHTML=`<div style="display:flex;gap:0.75rem;align-items:center;"><span>${l.icon}</span><div class="ml-name">${l.name}</div></div><div class="ml-stats">${l.meta}</div>`;
+    v.appendChild(el);
+    if(i<mlLevels.length-1){const c=document.createElement('div');c.className='connector-line';v.appendChild(c);}
+  });
+}
+function simulateML(mode){
+  buildMLViz();
+  const log=document.getElementById('mlLog'); log.innerHTML='';
+  if(mode==='reset') return;
+  const delay=ms=>new Promise(r=>setTimeout(r,ms));
+  async function run(){
+    if(mode==='hit1'){
+      document.getElementById('ml0').className='ml-level active'; await delay(300);
+      document.getElementById('ml1').className='ml-level active'; await delay(400);
+      document.getElementById('ml1').className='ml-level hit-level';
+      log.innerHTML='✅ L1 HIT — Data found in L1 cache. Penalty: ~2 cycles. Fast!';
+      addXP(5,'Multilevel cache');
+    } else if(mode==='miss1hit2'){
+      document.getElementById('ml0').className='ml-level active'; await delay(200);
+      document.getElementById('ml1').className='ml-level active'; await delay(400);
+      document.getElementById('ml1').className='ml-level miss-level';
+      log.innerHTML='❌ L1 MISS — Checking L2...';
+      await delay(400);
+      document.getElementById('ml2').className='ml-level active'; await delay(400);
+      document.getElementById('ml2').className='ml-level hit-level';
+      log.innerHTML='✅ L2 HIT — Data found in L2. Miss penalty = L2 access time (~15 cycles). Still much better than RAM!';
+      addXP(10,'Multilevel cache analysis');
+    } else if(mode==='missall'){
+      document.getElementById('ml0').className='ml-level active'; await delay(200);
+      document.getElementById('ml1').className='ml-level miss-level'; await delay(400);
+      document.getElementById('ml2').className='ml-level miss-level'; await delay(400);
+      document.getElementById('ml3').className='ml-level hit-level';
+      log.innerHTML='⚠️ ALL MISS — Data fetched from main memory. Miss penalty = ~200 cycles. CPU stalls heavily. This is why cache design matters!';
+    }
+  }
+  run();
+}
+buildMLViz();
+
+// ═══ QUIZ ENGINE ═══
+const questions=[
+  {q:"What does 'temporal locality' mean?",opts:["Data near the current address will be accessed soon","Recently accessed data will likely be accessed again soon","All memory is accessed in order","Cache is always faster than registers"],ans:1,exp:"Temporal locality = locality in TIME. If address X was just accessed, X will likely be accessed again soon. Classic example: loop counters and induction variables."},
+  {q:"A direct-mapped cache has 8 blocks. Address 26 (11010₂) maps to which cache index?",opts:["000","010","110","011"],ans:1,exp:"Index = address mod 8. Low-order 3 bits = 010₂ = 2. So address 26 maps to index 2. In binary: 11010₂, low 3 bits = 010."},
+  {q:"In cache addressing, what does the TAG field identify?",opts:["Which byte within a block","Which block in the cache","Which memory block is stored in the cache slot","Whether the data is valid"],ans:2,exp:"The TAG contains the HIGH-ORDER bits of the memory address. It identifies WHICH block from memory is currently stored in that cache slot. Valid bit tells us if data is present; tag tells us WHICH data."},
+  {q:"AMAT = Hit Time + Miss Rate × Miss Penalty. With hit time=1, miss rate=5%, miss penalty=20 cycles, what is AMAT?",opts:["2 cycles","1.5 cycles","21 cycles","20 cycles"],ans:0,exp:"AMAT = 1 + 0.05 × 20 = 1 + 1 = 2 cycles. This is 2ns with a 1ns clock — your memory effectively takes twice as long as pure cache access."},
+  {q:"Which memory technology requires periodic REFRESH to maintain data?",opts:["SRAM","DRAM","Flash","Magnetic Disk"],ans:1,exp:"DRAM stores charge in capacitors, which leak over time. It must be refreshed (read and rewrite) periodically to maintain data. SRAM uses flip-flops and doesn't need refresh."},
+  {q:"Write-through vs Write-back: With base CPI=1, 10% stores, memory penalty=100 cycles — what is the effective CPI for write-through?",opts:["1","11","2","10"],ans:1,exp:"Write-through: every store goes to memory. Effective CPI = 1 + 0.1×100 = 1+10 = 11. This is why write buffers are used to hide this penalty."},
+  {q:"In the lecture example (I-miss=2%, D-miss=4%, penalty=100 cycles, base CPI=2, loads/stores=36%), what is the total CPI with stalls?",opts:["2","3.44","5.44","7.44"],ans:2,exp:"I-cache stall: 0.02×100 = 2.0 per instruction. D-cache stall: 0.36×0.04×100 = 1.44. Total stall = 3.44. Actual CPI = 2 + 3.44 = 5.44. Perfect cache is 5.44/2 = 2.72× faster!"},
+  {q:"In LRU replacement for set-associative caches, which block is evicted on a miss?",opts:["The first block loaded","The block that hasn't been used for the longest time","A random block","The block with the highest address"],ans:1,exp:"LRU = Least Recently Used. The block that was accessed least recently (oldest) is the victim. This policy exploits temporal locality — recently used blocks are likely to be used again."},
+  {q:"64-block, 16-byte/block cache. Address 1200 maps to which block number?",opts:["11","75","26","48"],ans:0,exp:"Block address = 1200÷16 = 75. Cache index = 75 mod 64 = 11. This is the direct-mapped formula: (block address) mod (#blocks in cache)."},
+  {q:"What is the key advantage of a FULLY ASSOCIATIVE cache over DIRECT MAPPED?",opts:["Cheaper to build","No conflict misses — any block goes anywhere","Faster lookup time","Uses fewer bits for tags"],ans:1,exp:"Fully associative allows any block to go in any cache slot, eliminating conflict misses (where two blocks compete for the same slot). The cost: needs a comparator for every cache entry — very expensive hardware."},
+];
+let qStep=0, qCorrect=0, qWrong=0, qAnswered=false;
+function buildQuiz(){
+  const prog=document.getElementById('quizProgress');
+  prog.innerHTML='';
+  questions.forEach((_,i)=>{
+    if(i>0){const l=document.createElement('div');l.className='step-line '+(i<=qStep?'done':'');prog.appendChild(l);}
+    const d=document.createElement('div');
+    d.className='step-dot '+(i<qStep?'done':i===qStep?'active':'');
+    d.textContent=i+1; prog.appendChild(d);
+  });
+  const q=questions[qStep];
+  document.getElementById('quizContainer').innerHTML=`
+    <div class="quiz-card">
+      <div class="quiz-q">Q${qStep+1}. ${q.q}</div>
+      <div class="quiz-options">${q.opts.map((o,i)=>`<button class="quiz-option" onclick="answerQ(${i})">${o}</button>`).join('')}</div>
+      <div class="quiz-explain" id="qExplain">💡 ${q.exp}</div>
+    </div>`;
+  document.getElementById('nextQBtn').style.display='none';
+  document.getElementById('restartQBtn').style.display='none';
+  qAnswered=false;
+}
+function answerQ(idx){
+  if(qAnswered) return;
+  qAnswered=true;
+  const q=questions[qStep];
+  const opts=document.querySelectorAll('.quiz-option');
+  opts[q.ans].classList.add('correct');
+  if(idx!==q.ans) opts[idx].classList.add('wrong');
+  else opts[q.ans].classList.add('correct');
+  document.getElementById('qExplain').style.display='block';
+  if(idx===q.ans){
+    qCorrect++; addXP(20,'Quiz correct!');
+    showNotification('Correct! +20 XP','xp-notif');
+  } else {
+    qWrong++;
+    showNotification('Wrong — check the explanation','miss-notif');
+  }
+  document.getElementById('qCorrect').textContent=qCorrect;
+  document.getElementById('qWrong').textContent=qWrong;
+  document.getElementById('qTotal').textContent=(qStep+1)+'/'+questions.length;
+  if(qStep<questions.length-1) document.getElementById('nextQBtn').style.display='inline-flex';
+  else { document.getElementById('restartQBtn').style.display='inline-flex'; addXP(100,'Quiz completed!'); }
+}
+function nextQuestion(){ qStep++; buildQuiz(); }
+function restartQuiz(){ qStep=0; qCorrect=0; qWrong=0; document.getElementById('qCorrect').textContent=0; document.getElementById('qWrong').textContent=0; document.getElementById('qTotal').textContent='0/10'; buildQuiz(); }
+buildQuiz();
+
+// ═══ SKILL TREE ═══
+const skills=[
+  {name:'Memory Fundamentals',xpReq:0,icon:'🔩',desc:'Locality & hierarchy basics'},
+  {name:'Cache Architect',xpReq:100,icon:'⚙️',desc:'Cache hit/miss analysis'},
+  {name:'Address Engineer',xpReq:200,icon:'🔧',desc:'Tag/index/offset mastery'},
+  {name:'Performance Analyst',xpReq:350,icon:'📊',desc:'CPI & AMAT calculations'},
+  {name:'Associativity Master',xpReq:500,icon:'🧠',desc:'Direct/set/fully associative'},
+  {name:'Hardware Legend',xpReq:750,icon:'🚀',desc:'Full architecture mastery'},
+];
+function updateSkillTree(){
+  const t=document.getElementById('skillTree');
+  t.innerHTML='';
+  skills.forEach(s=>{
+    const unlocked=xp>=s.xpReq;
+    const current=unlocked&&(skills.find(sk=>!xp||xp<sk.xpReq)||{})===s;
+    const div=document.createElement('div');
+    div.className='skill-node '+(unlocked?xp>=(s.xpReq+100)?'unlocked':'current':'');
+    div.innerHTML=`
+      <div class="skill-icon">${s.icon}</div>
+      <div class="skill-info">
+        <div class="skill-name">${s.name}</div>
+        <div class="skill-xp-req">${s.desc}</div>
+      </div>
+      <div class="skill-status" style="color:${unlocked?'var(--green)':'var(--text3)'};">${unlocked?'✅ UNLOCKED':'🔒 '+s.xpReq+' XP'}</div>`;
+    t.appendChild(div);
+  });
+}
+updateSkillTree();
+
+// ═══ NAV ACTIVE STATE ═══
+const sections=document.querySelectorAll('section[id]');
+const navLinks=document.querySelectorAll('nav a');
+function updateNav(){
+  const scroll=window.scrollY+120;
+  sections.forEach(s=>{
+    if(scroll>=s.offsetTop&&scroll<s.offsetTop+s.offsetHeight){
+      navLinks.forEach(l=>l.classList.remove('active'));
+      const link=document.querySelector(`nav a[href="#${s.id}"]`);
+      if(link) link.classList.add('active');
+    }
+  });
+}
+window.addEventListener('scroll',updateNav,{passive:true});
+
+// ═══ INTERSECTION OBSERVER for fade-ins ═══
+const observer=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting) e.target.style.opacity='1';});
+},{threshold:0.1});
+document.querySelectorAll('.fade-in-up').forEach(el=>observer.observe(el));
+</script>
+</body>
+</html>
